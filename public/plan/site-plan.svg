@@ -1,0 +1,160 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1100" width="1600" height="1100">
+<defs>
+  <radialGradient id="treeGrad" cx="35%" cy="35%" r="70%"><stop offset="0" stop-color="#8fbf6a"/><stop offset="1" stop-color="#4f8a4a"/></radialGradient>
+  <filter id="noise"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 .45 0 0 0 0 .38 0 0 0 0 .25 0 0 0 .22 0"/></filter>
+  <pattern id="grain" width="240" height="240" patternUnits="userSpaceOnUse"><rect width="240" height="240" filter="url(#noise)"/></pattern>
+  <style>
+    .road{font:700 15px 'Manrope',system-ui,sans-serif;letter-spacing:.32em;fill:#5f6a68}
+    .label{font:800 13px 'Manrope',system-ui,sans-serif;letter-spacing:.18em;fill:#2d4a40}
+  </style>
+</defs>
+<rect width="1600" height="1100" fill="#ece5d3"/>
+<rect width="1600" height="1100" fill="url(#grain)" opacity=".55"/>
+<g><circle cx="2.868368735414342" cy="27.81532504951146" r="9.36974986397638" fill="#000" opacity=".08"/><circle cx="0.5259312694202468" cy="25.004400090318548" r="9.36974986397638" fill="url(#treeGrad)"/></g>
+<g><circle cx="604.8610693765675" cy="1096.7594753221697" r="11.610862974180712" fill="#000" opacity=".08"/><circle cx="601.9583536330223" cy="1093.2762164299154" r="11.610862974180712" fill="url(#treeGrad)"/></g>
+<g><circle cx="5.298243226761225" cy="287.11360867797737" r="14.339388640913544" fill="#000" opacity=".08"/><circle cx="1.7133960665328392" cy="282.8117920857033" r="14.339388640913544" fill="url(#treeGrad)"/></g>
+<g><circle cx="1598.3804495250856" cy="499.9995080112941" r="9.226673077537374" fill="#000" opacity=".08"/><circle cx="1596.0737812557013" cy="497.23150608803286" r="9.226673077537374" fill="url(#treeGrad)"/></g>
+<g><circle cx="304.80520083120115" cy="7.79745899815807" r="14.26636578120884" fill="#000" opacity=".08"/><circle cx="301.23860938589894" cy="3.517549263795418" r="14.26636578120884" fill="url(#treeGrad)"/></g>
+<g><circle cx="856.9837319685461" cy="1088.4220684969073" r="7.704995003254148" fill="#000" opacity=".08"/><circle cx="855.0574832177325" cy="1086.110569995931" r="7.704995003254148" fill="url(#treeGrad)"/></g>
+<g><circle cx="16.59574852473638" cy="147.4639343599453" r="11.181367746723227" fill="#000" opacity=".08"/><circle cx="13.800406588055573" cy="144.10952403592833" r="11.181367746723227" fill="url(#treeGrad)"/></g>
+<g><circle cx="1598.0421166659028" cy="497.13872075815567" r="7.110858996967654" fill="#000" opacity=".08"/><circle cx="1596.2644019166607" cy="495.0054630590654" r="7.110858996967654" fill="url(#treeGrad)"/></g>
+<g><circle cx="40.35930787339742" cy="35.34669242943329" r="14.07253747626444" fill="#000" opacity=".08"/><circle cx="36.84117350433131" cy="31.124931186553958" r="14.07253747626444" fill="url(#treeGrad)"/></g>
+<g><circle cx="915.836266106075" cy="1085.7365110271019" r="10.098017531538398" fill="#000" opacity=".08"/><circle cx="913.3117617231903" cy="1082.7071057676403" r="10.098017531538398" fill="url(#treeGrad)"/></g>
+<g><circle cx="8.819915721956562" cy="297.6537744038308" r="12.768505622417205" fill="#000" opacity=".08"/><circle cx="5.627789316352261" cy="293.82322271710564" r="12.768505622417205" fill="url(#treeGrad)"/></g>
+<g><circle cx="1593.64629308893" cy="60.61358012223018" r="8.419294597971527" fill="#000" opacity=".08"/><circle cx="1591.5414694394372" cy="58.087791742838725" r="8.419294597971527" fill="url(#treeGrad)"/></g>
+<g><circle cx="728.0054179382328" cy="8.829324944763746" r="7.582607167849883" fill="#000" opacity=".08"/><circle cx="726.1097661462703" cy="6.554542794408782" r="7.582607167849883" fill="url(#treeGrad)"/></g>
+<g><circle cx="1582.4268736474232" cy="1071.455790440278" r="15.939721757024268" fill="#000" opacity=".08"/><circle cx="1578.4419432081672" cy="1066.6738739131706" r="15.939721757024268" fill="url(#treeGrad)"/></g>
+<g><circle cx="5.961173251351504" cy="775.288433353825" r="11.893315811076496" fill="#000" opacity=".08"/><circle cx="2.987844298582379" cy="771.720438610502" r="11.893315811076496" fill="url(#treeGrad)"/></g>
+<g><circle cx="1591.7004133737184" cy="212.1360722883009" r="10.594451756770212" fill="#000" opacity=".08"/><circle cx="1589.0518004345258" cy="208.95773676126984" r="10.594451756770212" fill="url(#treeGrad)"/></g>
+<g><circle cx="705.9241857514011" cy="10.343466580420234" r="14.297034263887475" fill="#000" opacity=".08"/><circle cx="702.3499271854292" cy="6.054356301253993" r="14.297034263887475" fill="url(#treeGrad)"/></g>
+<g><circle cx="1291.8090301446468" cy="1067.3526590073504" r="8.20573194856358" fill="#000" opacity=".08"/><circle cx="1289.7575971575059" cy="1064.8909394227815" r="8.20573194856358" fill="url(#treeGrad)"/></g>
+<g><circle cx="6.880379014537091" cy="421.83397580593265" r="11.560521829464026" fill="#000" opacity=".08"/><circle cx="3.9902485571710846" cy="418.36581925709345" r="11.560521829464026" fill="url(#treeGrad)"/></g>
+<g><circle cx="1586.796745479267" cy="116.92124267646227" r="10.13731867041189" fill="#000" opacity=".08"/><circle cx="1584.262415811664" cy="113.88004707533871" r="10.13731867041189" fill="url(#treeGrad)"/></g>
+<g><circle cx="1233.1316028852077" cy="27.229908568113956" r="15.236103850171066" fill="#000" opacity=".08"/><circle cx="1229.322576922665" cy="22.659077413062636" r="15.236103850171066" fill="url(#treeGrad)"/></g>
+<g><circle cx="749.0086874374036" cy="1095.0046086518603" r="11.205735410289591" fill="#000" opacity=".08"/><circle cx="746.2072535848313" cy="1091.6428880287733" r="11.205735410289591" fill="url(#treeGrad)"/></g>
+<g><circle cx="16.404371344278914" cy="356.47316610079554" r="14.789652154119361" fill="#000" opacity=".08"/><circle cx="12.706958305749072" cy="352.0362704545597" r="14.789652154119361" fill="url(#treeGrad)"/></g>
+<g><circle cx="1589.7169299719083" cy="616.7793522730277" r="11.781029719655429" fill="#000" opacity=".08"/><circle cx="1586.7716725419943" cy="613.2450433571311" r="11.781029719655429" fill="url(#treeGrad)"/></g>
+<g><circle cx="494.58257163766075" cy="13.890814159988253" r="11.01916468517777" fill="#000" opacity=".08"/><circle cx="491.82778046636633" cy="10.58506475443492" r="11.01916468517777" fill="url(#treeGrad)"/></g>
+<g><circle cx="909.6791258563093" cy="1069.3099496948626" r="11.407872083976745" fill="#000" opacity=".08"/><circle cx="906.8271578353151" cy="1065.8875880696696" r="11.407872083976745" fill="url(#treeGrad)"/></g>
+<g><circle cx="13.84022833252347" cy="13.600555879064423" r="10.494319152547344" fill="#000" opacity=".08"/><circle cx="11.216648544386633" cy="10.45226013330022" r="10.494319152547344" fill="url(#treeGrad)"/></g>
+<g><circle cx="1600.7112248236883" cy="1033.0378863781111" r="10.854622041671185" fill="#000" opacity=".08"/><circle cx="1597.9975693132706" cy="1029.7814997656099" r="10.854622041671185" fill="url(#treeGrad)"/></g>
+<g><circle cx="470.6073450293461" cy="11.372080085028038" r="10.290973527627973" fill="#000" opacity=".08"/><circle cx="468.0346016474391" cy="8.284788026739646" r="10.290973527627973" fill="url(#treeGrad)"/></g>
+<g><circle cx="1139.2028914587133" cy="1067.9250107938658" r="11.301504986641469" fill="#000" opacity=".08"/><circle cx="1136.377515212053" cy="1064.5345592978733" r="11.301504986641469" fill="url(#treeGrad)"/></g>
+<g><circle cx="4.666445217017499" cy="589.153282876176" r="10.602853525060093" fill="#000" opacity=".08"/><circle cx="2.015731835752476" cy="585.972426818658" r="10.602853525060093" fill="url(#treeGrad)"/></g>
+<g><circle cx="1595.6545858667507" cy="895.9710755752595" r="7.686284202324491" fill="#000" opacity=".08"/><circle cx="1593.7330148161695" cy="893.6651903145622" r="7.686284202324491" fill="url(#treeGrad)"/></g>
+<g><circle cx="958.8246182227269" cy="11.766120520481952" r="10.47818329322914" fill="#000" opacity=".08"/><circle cx="956.2050723994197" cy="8.62266553251321" r="10.47818329322914" fill="url(#treeGrad)"/></g>
+<g><circle cx="504.90604703340773" cy="1072.9945798986075" r="9.560177429635242" fill="#000" opacity=".08"/><circle cx="502.51600267599895" cy="1070.126526669717" r="9.560177429635242" fill="url(#treeGrad)"/></g>
+<g><circle cx="13.496310588201798" cy="219.5130322709801" r="11.627599275324119" fill="#000" opacity=".08"/><circle cx="10.589410769370767" cy="216.02475248838286" r="11.627599275324119" fill="url(#treeGrad)"/></g>
+<g><circle cx="1596.5201174837025" cy="142.58816867204212" r="9.001290490386346" fill="#000" opacity=".08"/><circle cx="1594.269794861106" cy="139.88778152492623" r="9.001290490386346" fill="url(#treeGrad)"/></g>
+<g><circle cx="481.48544885891994" cy="36.578144013395665" r="13.531701300788392" fill="#000" opacity=".08"/><circle cx="478.10252353372283" cy="32.51863362315915" r="13.531701300788392" fill="url(#treeGrad)"/></g>
+<g><circle cx="945.4680093099298" cy="1081.7666550626202" r="10.293963205808739" fill="#000" opacity=".08"/><circle cx="942.8945185084776" cy="1078.6784661008776" r="10.293963205808739" fill="url(#treeGrad)"/></g>
+<g><circle cx="9.251716135420573" cy="432.04173254165033" r="10.863741129044202" fill="#000" opacity=".08"/><circle cx="6.535780853159522" cy="428.78261020293706" r="10.863741129044202" fill="url(#treeGrad)"/></g>
+<g><circle cx="1601.6523327244468" cy="391.9913364474581" r="13.561592441575222" fill="#000" opacity=".08"/><circle cx="1598.261934614053" cy="387.9228587149855" r="13.561592441575222" fill="url(#treeGrad)"/></g>
+<g><circle cx="657.9233141676973" cy="15.489222290775947" r="11.828626511924552" fill="#000" opacity=".08"/><circle cx="654.9661575397162" cy="11.940634337198581" r="11.828626511924552" fill="url(#treeGrad)"/></g>
+<g><circle cx="310.733175849992" cy="1096.0919254762975" r="15.683950139846607" fill="#000" opacity=".08"/><circle cx="306.81218831503037" cy="1091.3867404343437" r="15.683950139846607" fill="url(#treeGrad)"/></g>
+<g><circle cx="10.35246421359709" cy="259.0947674198028" r="8.775084284856062" fill="#000" opacity=".08"/><circle cx="8.158693142383074" cy="256.46224213434596" r="8.775084284856062" fill="url(#treeGrad)"/></g>
+<g><circle cx="1586.7698224599194" cy="896.6025484491164" r="10.098152890892841" fill="#000" opacity=".08"/><circle cx="1584.245284237196" cy="893.5731025818485" r="10.098152890892841" fill="url(#treeGrad)"/></g>
+<g><circle cx="1007.4813693647565" cy="32.7745709997365" r="8.106153392331818" fill="#000" opacity=".08"/><circle cx="1005.4548310166736" cy="30.342724982036952" r="8.106153392331818" fill="url(#treeGrad)"/></g>
+<g><circle cx="1090.065755215302" cy="1095.722056665851" r="8.172923314546164" fill="#000" opacity=".08"/><circle cx="1088.0225243866655" cy="1093.270179671487" r="8.172923314546164" fill="url(#treeGrad)"/></g>
+<g><circle cx="10.829189165452672" cy="47.047088912126696" r="8.572472625479541" fill="#000" opacity=".08"/><circle cx="8.686071009082786" cy="44.47534712448283" r="8.572472625479541" fill="url(#treeGrad)"/></g>
+<g><circle cx="1589.6245454199375" cy="174.49981537144615" r="9.25132080563467" fill="#000" opacity=".08"/><circle cx="1587.311715218529" cy="171.72441912975574" r="9.25132080563467" fill="url(#treeGrad)"/></g>
+<g><circle cx="349.14137121768795" cy="28.56314457185859" r="10.728602180936003" fill="#000" opacity=".08"/><circle cx="346.45922067245397" cy="25.34456391757779" r="10.728602180936003" fill="url(#treeGrad)"/></g>
+<g><circle cx="1535.0765692148836" cy="1081.3768875472497" r="12.735612230594839" fill="#000" opacity=".08"/><circle cx="1531.892666157235" cy="1077.5562038780713" r="12.735612230594839" fill="url(#treeGrad)"/></g>
+<g><circle cx="9.303984156277947" cy="544.2778218411167" r="7.7688332165301155" fill="#000" opacity=".08"/><circle cx="7.361775852145418" cy="541.9471718761578" r="7.7688332165301155" fill="url(#treeGrad)"/></g>
+<g><circle cx="1593.9639777745715" cy="170.14547458453612" r="12.456303801812515" fill="#000" opacity=".08"/><circle cx="1590.8499018241184" cy="166.40858344399237" r="12.456303801812515" fill="url(#treeGrad)"/></g>
+<g><circle cx="554.3454239011933" cy="11.853914203591565" r="14.341841768326091" fill="#000" opacity=".08"/><circle cx="550.7599634591118" cy="7.551361673093738" r="14.341841768326091" fill="url(#treeGrad)"/></g>
+<g><circle cx="772.4761085073474" cy="1081.5261504665725" r="7.512802535679938" fill="#000" opacity=".08"/><circle cx="770.5979078734274" cy="1079.2723097058686" r="7.512802535679938" fill="url(#treeGrad)"/></g>
+<g><circle cx="5.9873153999096855" cy="746.2039892660957" r="14.216928645704806" fill="#000" opacity=".08"/><circle cx="2.433083238483484" cy="741.9389106723843" r="14.216928645704806" fill="url(#treeGrad)"/></g>
+<g><circle cx="1596.0579436062212" cy="58.511114667878594" r="13.643283966130841" fill="#000" opacity=".08"/><circle cx="1592.6471226146884" cy="54.41812947803934" r="13.643283966130841" fill="url(#treeGrad)"/></g>
+<g><circle cx="1545.1835894431533" cy="5.290075289402227" r="12.814567243973322" fill="#000" opacity=".08"/><circle cx="1541.97994763216" cy="1.4457051162102308" r="12.814567243973322" fill="url(#treeGrad)"/></g>
+<g><circle cx="612.6857674265614" cy="1078.1402812585611" r="10.427060892271866" fill="#000" opacity=".08"/><circle cx="610.0790022034934" cy="1075.0121629908795" r="10.427060892271866" fill="url(#treeGrad)"/></g>
+<g><circle cx="17.62823343568317" cy="934.4026591034631" r="11.97902487402691" fill="#000" opacity=".08"/><circle cx="14.633477217176443" cy="930.808951641255" r="11.97902487402691" fill="url(#treeGrad)"/></g>
+<g><circle cx="1598.9631374468684" cy="810.0446955271482" r="12.54127497648939" fill="#000" opacity=".08"/><circle cx="1595.827818702746" cy="806.2823130342014" r="12.54127497648939" fill="url(#treeGrad)"/></g>
+<g><circle cx="40.80520336847306" cy="26.109484435440493" r="14.913668693894213" fill="#000" opacity=".08"/><circle cx="37.07678619499951" cy="21.63538382727223" r="14.913668693894213" fill="url(#treeGrad)"/></g>
+<g><circle cx="541.3872729672698" cy="1096.2057320755493" r="11.062493278237518" fill="#000" opacity=".08"/><circle cx="538.6216496477105" cy="1092.8869840920781" r="11.062493278237518" fill="url(#treeGrad)"/></g>
+<g><circle cx="2.2329340342971813" cy="977.5865703626877" r="7.332261973835772" fill="#000" opacity=".08"/><circle cx="0.39986854083823836" cy="975.386891770537" r="7.332261973835772" fill="url(#treeGrad)"/></g>
+<g><circle cx="1596.4875519387308" cy="606.4464089675308" r="11.89956463305239" fill="#000" opacity=".08"/><circle cx="1593.5126607804677" cy="602.8765395776151" r="11.89956463305239" fill="url(#treeGrad)"/></g>
+<g><circle cx="1065.6540878262874" cy="23.56397923879696" r="8.166714579022223" fill="#000" opacity=".08"/><circle cx="1063.6124091815318" cy="21.113964865090292" r="8.166714579022223" fill="url(#treeGrad)"/></g>
+<g><circle cx="1242.1892586422052" cy="1096.400537128561" r="10.896816433311269" fill="#000" opacity=".08"/><circle cx="1239.4650545338775" cy="1093.1314921985675" r="10.896816433311269" fill="url(#treeGrad)"/></g>
+<g><circle cx="19.638835823874768" cy="490.93504242811827" r="15.720690246876972" fill="#000" opacity=".08"/><circle cx="15.708663262155525" cy="486.21883535405516" r="15.720690246876972" fill="url(#treeGrad)"/></g>
+<g><circle cx="1587.691711244119" cy="367.8852014222976" r="14.172033357594193" fill="#000" opacity=".08"/><circle cx="1584.1487029047205" cy="363.63359141501934" r="14.172033357594193" fill="url(#treeGrad)"/></g>
+<g><circle cx="602.0022690927165" cy="7.026875609463897" r="15.365243962374743" fill="#000" opacity=".08"/><circle cx="598.1609581021228" cy="2.4173024207514735" r="15.365243962374743" fill="url(#treeGrad)"/></g>
+<g><circle cx="1009.0469487049123" cy="1090.695847698204" r="14.654924715547752" fill="#000" opacity=".08"/><circle cx="1005.3832175260254" cy="1086.2993702835397" r="14.654924715547752" fill="url(#treeGrad)"/></g>
+<rect x="0" y="964" width="1600" height="96" fill="#9ea6a8"/>
+<rect x="0" y="968" width="1600" height="2" fill="#f5f5f0" opacity=".8"/>
+<rect x="0" y="1054" width="1600" height="2" fill="#f5f5f0" opacity=".8"/>
+<line x1="0" y1="1012" x2="1600" y2="1012" stroke="#fff" stroke-width="3" stroke-dasharray="26 22"/>
+<text x="800" y="1038" text-anchor="middle" class="road" fill="#eef0ee">ROUTE NATIONALE</text>
+<rect x="20" y="40" width="1560" height="924" fill="#f7f1e3"/>
+<rect x="20" y="40" width="1560" height="60" fill="#cfd3d1"/>
+<line x1="20" y1="70" x2="1580" y2="70" stroke="#fff" stroke-width="2" stroke-dasharray="16 16" opacity=".9"/>
+<text x="770" y="76" text-anchor="middle" class="road" opacity=".75">RUE 1</text>
+<rect x="20" y="340" width="1560" height="84" fill="#cfd3d1"/>
+<rect x="20" y="375.4" width="1560" height="13.200000000000017" fill="#a9c98f"/>
+<g><circle cx="57.5" cy="383.8" r="6" fill="#000" opacity=".08"/><circle cx="56" cy="382" r="6" fill="url(#treeGrad)"/></g>
+<g><circle cx="129.5" cy="383.8" r="6" fill="#000" opacity=".08"/><circle cx="128" cy="382" r="6" fill="url(#treeGrad)"/></g>
+<g><circle cx="201.5" cy="383.8" r="6" fill="#000" opacity=".08"/><circle cx="200" cy="382" r="6" fill="url(#treeGrad)"/></g>
+<g><circle cx="273.5" cy="383.8" r="6" fill="#000" opacity=".08"/><circle cx="272" cy="382" r="6" fill="url(#treeGrad)"/></g>
+<g><circle cx="345.5" cy="383.8" r="6" fill="#000" opacity=".08"/><circle cx="344" cy="382" r="6" fill="url(#treeGrad)"/></g>
+<g><circle cx="417.5" cy="383.8" r="6" fill="#000" opacity=".08"/><circle cx="416" cy="382" r="6" fill="url(#treeGrad)"/></g>
+<g><circle cx="489.5" cy="383.8" r="6" fill="#000" opacity=".08"/><circle cx="488" cy="382" r="6" fill="url(#treeGrad)"/></g>
+<g><circle cx="561.5" cy="383.8" r="6" fill="#000" opacity=".08"/><circle cx="560" cy="382" r="6" fill="url(#treeGrad)"/></g>
+<g><circle cx="633.5" cy="383.8" r="6" fill="#000" opacity=".08"/><circle cx="632" cy="382" r="6" fill="url(#treeGrad)"/></g>
+<g><circle cx="705.5" cy="383.8" r="6" fill="#000" opacity=".08"/><circle cx="704" cy="382" r="6" fill="url(#treeGrad)"/></g>
+<g><circle cx="777.5" cy="383.8" r="6" fill="#000" opacity=".08"/><circle cx="776" cy="382" r="6" fill="url(#treeGrad)"/></g>
+<g><circle cx="849.5" cy="383.8" r="6" fill="#000" opacity=".08"/><circle cx="848" cy="382" r="6" fill="url(#treeGrad)"/></g>
+<g><circle cx="921.5" cy="383.8" r="6" fill="#000" opacity=".08"/><circle cx="920" cy="382" r="6" fill="url(#treeGrad)"/></g>
+<g><circle cx="993.5" cy="383.8" r="6" fill="#000" opacity=".08"/><circle cx="992" cy="382" r="6" fill="url(#treeGrad)"/></g>
+<g><circle cx="1065.5" cy="383.8" r="6" fill="#000" opacity=".08"/><circle cx="1064" cy="382" r="6" fill="url(#treeGrad)"/></g>
+<g><circle cx="1137.5" cy="383.8" r="6" fill="#000" opacity=".08"/><circle cx="1136" cy="382" r="6" fill="url(#treeGrad)"/></g>
+<g><circle cx="1209.5" cy="383.8" r="6" fill="#000" opacity=".08"/><circle cx="1208" cy="382" r="6" fill="url(#treeGrad)"/></g>
+<g><circle cx="1281.5" cy="383.8" r="6" fill="#000" opacity=".08"/><circle cx="1280" cy="382" r="6" fill="url(#treeGrad)"/></g>
+<g><circle cx="1353.5" cy="383.8" r="6" fill="#000" opacity=".08"/><circle cx="1352" cy="382" r="6" fill="url(#treeGrad)"/></g>
+<g><circle cx="1425.5" cy="383.8" r="6" fill="#000" opacity=".08"/><circle cx="1424" cy="382" r="6" fill="url(#treeGrad)"/></g>
+<g><circle cx="1497.5" cy="383.8" r="6" fill="#000" opacity=".08"/><circle cx="1496" cy="382" r="6" fill="url(#treeGrad)"/></g>
+<g><circle cx="1569.5" cy="383.8" r="6" fill="#000" opacity=".08"/><circle cx="1568" cy="382" r="6" fill="url(#treeGrad)"/></g>
+<text x="770" y="362" text-anchor="middle" class="road">AVENUE NADI</text>
+<rect x="20" y="664" width="1560" height="60" fill="#cfd3d1"/>
+<line x1="20" y1="694" x2="1580" y2="694" stroke="#fff" stroke-width="2" stroke-dasharray="16 16" opacity=".9"/>
+<text x="770" y="700" text-anchor="middle" class="road" opacity=".75">RUE 2</text>
+<rect x="500" y="40" width="60" height="924" fill="#cfd3d1"/>
+<rect x="500" y="964" width="60" height="0.5999999999999659" fill="#cfd3d1"/>
+<line x1="530" y1="40" x2="530" y2="964" stroke="#fff" stroke-width="2" stroke-dasharray="16 16" opacity=".9"/>
+<text x="530" y="832" text-anchor="middle" class="road" opacity=".75" transform="rotate(-90 530 832)">RUE 3</text>
+<g transform="translate(530 1014)"><circle r="17" fill="#173d34"/><path d="M-6 4 L0 -6 L6 4" fill="none" stroke="#e8c27a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></g>
+<text x="530" y="1048" text-anchor="middle" class="label" fill="#173d34">ENTRÉE</text>
+<rect x="1040" y="40" width="60" height="924" fill="#cfd3d1"/>
+<rect x="1040" y="964" width="60" height="0.5999999999999659" fill="#cfd3d1"/>
+<line x1="1070" y1="40" x2="1070" y2="964" stroke="#fff" stroke-width="2" stroke-dasharray="16 16" opacity=".9"/>
+<text x="1070" y="832" text-anchor="middle" class="road" opacity=".75" transform="rotate(-90 1070 832)">RUE 4</text>
+<g transform="translate(1070 1014)"><circle r="17" fill="#173d34"/><path d="M-6 4 L0 -6 L6 4" fill="none" stroke="#e8c27a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></g>
+<text x="1070" y="1048" text-anchor="middle" class="label" fill="#173d34">ENTRÉE</text>
+<rect x="563.5999999999999" y="427.59999999999997" width="232.80000000000007" height="232.80000000000007" rx="10" fill="#b9d49d"/>
+<path d="M 572 640 C 632 544, 716 592, 788 448" fill="none" stroke="#f3ecd9" stroke-width="10" stroke-linecap="round"/>
+<g><circle cx="610.0123593673458" cy="541.4762936385595" r="8.396208203301027" fill="#000" opacity=".08"/><circle cx="607.9133073165206" cy="538.9574311775691" r="8.396208203301027" fill="url(#treeGrad)"/></g>
+<g><circle cx="641.1141836789801" cy="496.356628029334" r="10.9994715130883" fill="#000" opacity=".08"/><circle cx="638.364315800708" cy="493.0567865754075" r="10.9994715130883" fill="url(#treeGrad)"/></g>
+<g><circle cx="729.5701520443615" cy="592.2042336523573" r="9.696971665785622" fill="#000" opacity=".08"/><circle cx="727.1459091279152" cy="589.2951421526216" r="9.696971665785622" fill="url(#treeGrad)"/></g>
+<g><circle cx="668.6042396423679" cy="607.0551065895754" r="12.37296682677508" fill="#000" opacity=".08"/><circle cx="665.5109979356741" cy="603.3432165415429" r="12.37296682677508" fill="url(#treeGrad)"/></g>
+<g><circle cx="682.0637615624012" cy="609.5244922938055" r="13.678162752350943" fill="#000" opacity=".08"/><circle cx="678.6442208743134" cy="605.4210434681002" r="13.678162752350943" fill="url(#treeGrad)"/></g>
+<g><circle cx="635.9807857306263" cy="489.6924879876361" r="12.606927240366979" fill="#000" opacity=".08"/><circle cx="632.8290539205345" cy="485.910409815526" r="12.606927240366979" fill="url(#treeGrad)"/></g>
+<g><circle cx="627.814433131427" cy="522.4963715568151" r="9.69538671029302" fill="#000" opacity=".08"/><circle cx="625.3905864538538" cy="519.5877555437272" r="9.69538671029302" fill="url(#treeGrad)"/></g>
+<g><circle cx="708.2505563540623" cy="470.12137824089393" r="12.228392546743521" fill="#000" opacity=".08"/><circle cx="705.1934582173764" cy="466.45286047687085" r="12.228392546743521" fill="url(#treeGrad)"/></g>
+<g><circle cx="656.5186648005792" cy="471.0422215126848" r="11.74027016548465" fill="#000" opacity=".08"/><circle cx="653.5835972592081" cy="467.5201404630394" r="11.74027016548465" fill="url(#treeGrad)"/></g>
+<g><circle cx="660.9204932144335" cy="526.539421516554" r="14.526458962845112" fill="#000" opacity=".08"/><circle cx="657.2888784737222" cy="522.1814838277004" r="14.526458962845112" fill="url(#treeGrad)"/></g>
+<g><circle cx="586.1684292174582" cy="464.7792153019265" r="9.849935663724258" fill="#000" opacity=".08"/><circle cx="583.7059453015271" cy="461.8242346028092" r="9.849935663724258" fill="url(#treeGrad)"/></g>
+<g><circle cx="722.8087311804375" cy="618.0852817051907" r="11.678887087552702" fill="#000" opacity=".08"/><circle cx="719.8890094085493" cy="614.5816155789249" r="11.678887087552702" fill="url(#treeGrad)"/></g>
+<g><circle cx="582.2831894619467" cy="606.5459711826369" r="10.685601613657179" fill="#000" opacity=".08"/><circle cx="579.6117890585324" cy="603.3402906985398" r="10.685601613657179" fill="url(#treeGrad)"/></g>
+<g><circle cx="607.0911897114397" cy="477.2735435907483" r="10.709720055302345" fill="#000" opacity=".08"/><circle cx="604.4137596976141" cy="474.0606275741576" r="10.709720055302345" fill="url(#treeGrad)"/></g>
+<g><circle cx="588.9198636062628" cy="501.387174582842" r="12.787671397242388" fill="#000" opacity=".08"/><circle cx="585.7229457569522" cy="497.5508731636693" r="12.787671397242388" fill="url(#treeGrad)"/></g>
+<g><circle cx="621.8283148963967" cy="456.2827094716325" r="12.907021869353038" fill="#000" opacity=".08"/><circle cx="618.6015594290584" cy="452.4106029108266" r="12.907021869353038" fill="url(#treeGrad)"/></g>
+<rect x="608" y="529" width="144" height="28" rx="14" fill="#fff" opacity=".85"/>
+<text x="680" y="548" text-anchor="middle" class="label">ESPACE VERT</text>
+<rect x="803.5999999999999" y="427.59999999999997" width="232.80000000000007" height="112.80000000000007" rx="6" fill="#e9dcc0"/>
+<rect x="848" y="442" width="144" height="84" rx="3" fill="#fdfaf2" stroke="#c9b48a" stroke-width="2"/>
+<circle cx="920" cy="484" r="26" fill="#e8c27a" stroke="#c9a15b" stroke-width="2"/>
+<rect x="980" y="436" width="10" height="34" rx="3" fill="#c9a15b"/>
+<text x="920" y="534.4000000000001" text-anchor="middle" class="label">MOSQUÉE</text>
+<rect x="20" y="40" width="1560" height="924" fill="none" stroke="#173d34" stroke-width="3" stroke-dasharray="14 8" opacity=".75"/>
+<g transform="translate(1530 1005)"><circle r="30" fill="#fff" opacity=".9"/><path d="M0 -22 L9 10 L0 4 L-9 10 Z" fill="#173d34"/><text y="24" text-anchor="middle" class="label" font-size="12">N</text></g>
+<g transform="translate(40 1060)"><rect x="-10" y="-30" width="280" height="44" rx="10" fill="#fff" opacity=".85"/><rect width="120" height="6" fill="#173d34"/><rect x="120" width="120" height="6" fill="#fff" stroke="#173d34"/><text y="-10" class="label" font-size="12">0</text><text x="120" y="-10" text-anchor="middle" class="label" font-size="12">20 m</text><text x="240" y="-10" text-anchor="middle" class="label" font-size="12">40 m</text></g>
+</svg>

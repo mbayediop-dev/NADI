@@ -1,0 +1,471 @@
+// Schéma de données — NADI Group (gestion de lotissement)
+// Les montants sont stockés en unités entières de la devise (FCFA, sans centimes).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────────────────────
+// Administration
+// ─────────────────────────────────────────────────────────────
+
+enum AdminRole {
+  OWNER // responsable : accès complet, gestion des utilisateurs
+  ADMIN // gestion complète sauf utilisateurs
+  VIEWER // lecture seule (comptable, associé…)
+}
+
+model AdminUser {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  phone        String?
+  passwordHash String
+  role         AdminRole @default(ADMIN)
+  active       Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  payments   Payment[]
+  activities Activity[]
+}
+
+// Paramètres globaux (ligne unique, id = 1)
+model Settings {
+  id Int @id @default(1)
+
+  // Entreprise
+  companyName     String  @default("NADI Group")
+  companyTagline  String  @default("Bâtir aujourd'hui les quartiers de demain")
+  companyAbout    String  @default("")
+  companyPhone    String  @default("")
+  companyWhatsapp String  @default("")
+  companyEmail    String  @default("")
+  companyAddress  String  @default("")
+  logoUrl         String?
+
+  // Site / lotissement
+  siteName        String  @default("Cité NADI")
+  siteLocation    String  @default("")
+  siteDescription String  @default("")
+  siteAreaM2      Float   @default(40000)
+  siteLatitude    Float?
+  siteLongitude   Float?
+  amenities       Json    @default("[]") // string[]
+  highlights      Json    @default("[]") // { title, text }[]
+  faq             Json    @default("[]") // { q, a }[]
+
+  // Page d'accueil
+  heroEyebrow     String  @default("")
+  heroTitle       String  @default("")
+  heroSubtitle    String  @default("")
+  heroImageUrl    String?
+  processImageUrl String?
+  contactImageUrl String?
+  aboutVideoUrl   String? // lien YouTube / Vimeo (section « Pourquoi choisir »)
+  lotImages       Json    @default("[]") // string[] : photos illustrant les cartes de terrains
+  businessHours   String  @default("")
+  socialFacebook  String?
+  socialInstagram String?
+  socialLinkedin  String?
+  socialYoutube   String?
+  legalNotice     String  @default("")
+  privacyPolicy   String  @default("")
+
+  // Plan interactif
+  planImageUrl String?
+  planWidth    Int     @default(1600)
+  planHeight   Int     @default(1000)
+
+  // Commercial
+  currencyLabel        String           @default("FCFA")
+  showPricesPublicly   Boolean          @default(true)
+  defaultDepositRate   Float            @default(30) // % du prix
+  defaultInstallments  Int              @default(12)
+  defaultFrequency     PaymentFrequency @default(MONTHLY)
+  reservationsOpen     Boolean          @default(true)
+
+  // Notifications SMS
+  alertPhone             String? // reçoit une alerte à chaque nouvelle demande
+  smsOnPayment           Boolean @default(true)
+  smsReminderDaysBefore  Int     @default(3)
+  smsOverdueReminders    Boolean @default(true)
+
+  updatedAt DateTime @updatedAt
+}
+
+// Champs personnalisés définis par le responsable pour décrire les terrains
+enum FieldType {
+  TEXT
+  NUMBER
+  BOOLEAN
+  SELECT
+}
+
+model LotField {
+  id         String    @id @default(cuid())
+  key        String    @unique
+  label      String
+  type       FieldType @default(TEXT)
+  unit       String?
+  options    String[]
+  showPublic Boolean   @default(true)
+  sortOrder  Int       @default(0)
+  createdAt  DateTime  @default(now())
+}
+
+// ─────────────────────────────────────────────────────────────
+// Terrains
+// ─────────────────────────────────────────────────────────────
+
+enum LotStatus {
+  AVAILABLE // disponible à la vente
+  RESERVED // réservé (option posée par le responsable)
+  SOLD // attribué à un acheteur
+  UNAVAILABLE // non commercialisé
+}
+
+enum PaymentFrequency {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  BIMONTHLY
+  QUARTERLY
+  SEMIANNUAL
+  ANNUAL
+  CUSTOM
+}
+
+model Lot {
+  id     String    @id @default(cuid())
+  number String    @unique
+  block  String? // îlot / zone
+  areaM2 Float
+  price  Float?
+  status LotStatus @default(AVAILABLE)
+
+  // Modalités de paiement proposées
+  depositAmount      Float?
+  installmentsCount  Int?
+  frequency          PaymentFrequency?
+  customIntervalDays Int?
+  installmentAmount  Float? // montant forcé ; sinon calculé
+
+  // Caractéristiques
+  soilType    String?
+  position    String?
+  orientation String?
+  frontageM   Float?
+  depthM      Float?
+  description String?
+  features    String[]
+  attributes  Json     @default("{}")
+  isFeatured  Boolean  @default(false)
+
+  // Géométrie sur le plan (points normalisés 0..1)
+  polygon Json?
+
+  reservedNote String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sales            Sale[]
+  requests         ReservationRequest[] @relation("RequestedLot")
+  proposedRequests ReservationRequest[] @relation("ProposedLot")
+
+  @@index([status])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Acheteurs, ventes, échéances, versements
+// ─────────────────────────────────────────────────────────────
+
+model Buyer {
+  id            String    @id @default(cuid())
+  firstName     String
+  lastName      String
+  phone         String    @unique // format E.164
+  phoneAlt      String?
+  email         String?
+  address       String?
+  city          String?
+  country       String?
+  profession    String?
+  idType        String?
+  idNumber      String?
+  notes         String?
+  portalEnabled Boolean   @default(true)
+  lastLoginAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sales    Sale[]
+  requests ReservationRequest[]
+}
+
+enum SaleStatus {
+  ACTIVE // en cours de paiement
+  COMPLETED // soldé
+  CANCELLED // annulé / désisté
+}
+
+model Sale {
+  id        String     @id @default(cuid())
+  reference String     @unique
+  lotId     String
+  buyerId   String
+  status    SaleStatus @default(ACTIVE)
+
+  price              Float
+  depositAmount      Float            @default(0)
+  depositDueDate     DateTime?
+  installmentsCount  Int              @default(0)
+  frequency          PaymentFrequency @default(MONTHLY)
+  customIntervalDays Int?
+  firstDueDate       DateTime?
+
+  signedAt     DateTime  @default(now())
+  notes        String?
+  cancelledAt  DateTime?
+  cancelReason String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  lot          Lot                 @relation(fields: [lotId], references: [id])
+  buyer        Buyer               @relation(fields: [buyerId], references: [id])
+  installments Installment[]
+  payments     Payment[]
+  documents    Document[]
+  request      ReservationRequest?
+
+  @@index([lotId])
+  @@index([buyerId])
+  @@index([status])
+}
+
+model Installment {
+  id      String   @id @default(cuid())
+  saleId  String
+  index   Int // 0 = acompte, 1..n = échéances
+  label   String
+  dueDate DateTime
+  amount  Float
+
+  sale             Sale      @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  lastReminderAt   DateTime?
+
+  @@unique([saleId, index])
+  @@index([dueDate])
+}
+
+enum PaymentMethod {
+  CASH
+  WAVE
+  ORANGE_MONEY
+  FREE_MONEY
+  BANK_TRANSFER
+  CHECK
+  OTHER
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  saleId        String
+  amount        Float
+  paidAt        DateTime
+  method        PaymentMethod @default(CASH)
+  reference     String?
+  note          String?
+  receiptNumber String        @unique
+  recordedById  String?
+  createdAt     DateTime      @default(now())
+
+  sale       Sale       @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  recordedBy AdminUser? @relation(fields: [recordedById], references: [id], onDelete: SetNull)
+
+  @@index([saleId])
+  @@index([paidAt])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Demandes de réservation (depuis le site)
+// ─────────────────────────────────────────────────────────────
+
+enum RequestStatus {
+  NEW // nouvelle demande
+  CONTACTED // client contacté
+  ALTERNATIVE_PROPOSED // autre terrain proposé
+  CONVERTED // transformée en vente
+  DECLINED // refusée / sans suite
+}
+
+model ReservationRequest {
+  id               String        @id @default(cuid())
+  lotId            String?
+  fullName         String
+  phone            String
+  email            String?
+  message          String?
+  preferredContact String        @default("CALL") // CALL | WHATSAPP | EMAIL
+  status           RequestStatus @default(NEW)
+  adminNotes       String?
+  proposedLotId    String?
+  buyerId          String?
+  saleId           String?       @unique
+  handledAt        DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  lot         Lot?   @relation("RequestedLot", fields: [lotId], references: [id], onDelete: SetNull)
+  proposedLot Lot?   @relation("ProposedLot", fields: [proposedLotId], references: [id], onDelete: SetNull)
+  buyer       Buyer? @relation(fields: [buyerId], references: [id], onDelete: SetNull)
+  sale        Sale?  @relation(fields: [saleId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Avancement du site, médias et documents
+// ─────────────────────────────────────────────────────────────
+
+enum MilestoneStatus {
+  PLANNED
+  IN_PROGRESS
+  DONE
+}
+
+model Milestone {
+  id          String          @id @default(cuid())
+  title       String
+  description String?
+  progress    Int             @default(0)
+  status      MilestoneStatus @default(PLANNED)
+  startDate   DateTime?
+  endDate     DateTime?
+  sortOrder   Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  updates SiteUpdate[]
+}
+
+enum Visibility {
+  PUBLIC // visible sur le site public
+  CLIENTS // réservé aux propriétaires connectés
+  PRIVATE // interne (administration uniquement)
+}
+
+model SiteUpdate {
+  id          String     @id @default(cuid())
+  title       String
+  body        String
+  visibility  Visibility @default(PUBLIC)
+  pinned      Boolean    @default(false)
+  milestoneId String?
+  publishedAt DateTime   @default(now())
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  milestone Milestone? @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+  media     Media[]
+
+  @@index([publishedAt])
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  EMBED // lien YouTube / Vimeo
+}
+
+model Media {
+  id         String    @id @default(cuid())
+  updateId   String
+  type       MediaType
+  url        String
+  storageKey String?
+  mimeType   String?
+  size       Int?
+  caption    String?
+  sortOrder  Int       @default(0)
+  createdAt  DateTime  @default(now())
+
+  update SiteUpdate @relation(fields: [updateId], references: [id], onDelete: Cascade)
+}
+
+enum DocumentCategory {
+  PLAN
+  ADMINISTRATIVE
+  CONTRACT
+  RECEIPT
+  TECHNICAL
+  OTHER
+}
+
+model Document {
+  id          String           @id @default(cuid())
+  title       String
+  description String?
+  category    DocumentCategory @default(OTHER)
+  visibility  Visibility       @default(CLIENTS)
+  saleId      String? // document propre à une vente (visible par l'acheteur concerné)
+  storageKey  String
+  filename    String
+  mimeType    String
+  size        Int
+  createdAt   DateTime         @default(now())
+
+  sale Sale? @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  @@index([saleId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Authentification client (OTP), journalisation
+// ─────────────────────────────────────────────────────────────
+
+model OtpCode {
+  id         String    @id @default(cuid())
+  phone      String
+  codeHash   String
+  expiresAt  DateTime
+  attempts   Int       @default(0)
+  consumedAt DateTime?
+  ip         String?
+  createdAt  DateTime  @default(now())
+
+  @@index([phone, createdAt])
+}
+
+model SmsLog {
+  id        String   @id @default(cuid())
+  to        String
+  body      String
+  kind      String // OTP | PAYMENT | REMINDER | ALERT | MANUAL
+  provider  String
+  status    String // SENT | FAILED
+  error     String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model Activity {
+  id         String   @id @default(cuid())
+  type       String
+  message    String
+  actorId    String?
+  entityType String?
+  entityId   String?
+  createdAt  DateTime @default(now())
+
+  actor AdminUser? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+}
