@@ -25,6 +25,9 @@ npm run typecheck      # tsc --noEmit
 npm run db:migrate     # nouvelle migration Prisma
 npm run db:seed        # ⚠️ réinitialise la base avec les données de démo
 npm run plan:generate  # régénère public/plan/site-plan.svg
+npm run db:check       # teste la connexion à la base (DATABASE_URL et DIRECT_URL)
+npm run storage:check  # teste le stockage configuré (envoi, lecture, suppression)
+npm run storage:sync   # envoie vers le stockage les fichiers référencés en base qui y manquent
 ```
 
 ## Règles Next.js 16 / Cache Components (importantes)
@@ -45,12 +48,15 @@ npm run plan:generate  # régénère public/plan/site-plan.svg
 
 - **Interface en français**, code (identifiants) en anglais. Montants en FCFA entiers (`Float` en base, toujours arrondis).
 - Accès aux données : `db` (`@/lib/db`), paramètres via `getSettings()` (`@/lib/settings`).
+- **La base est distante (≈ 100 ms par requête)** : jamais de boucle de requêtes dans une transaction (au-delà d'une quarantaine, Prisma abandonne — erreur `P2028` — et rien n'est enregistré). Écritures multiples : `createMany` / `updateMany`, ou une seule requête SQL (voir `updateLotAmounts` dans `terrains/actions.ts`).
 - Authentification : pages → `requireAdmin(role?)` / `requireBuyer()` ; actions serveur → `assertAdmin("ADMIN")` (les `VIEWER` sont en lecture seule).
 - Actions serveur : fichier `actions.ts` (`"use server"`) à côté de la route, enveloppées dans `run()` et renvoyant `ActionResult` (`@/lib/action`). Erreurs affichables : `throw new UserError("…")`. Côté client : `useServerAction()` (`@/hooks/use-server-action`) gère toasts + `router.refresh()`.
 - Journal : `logActivity()` pour toute action métier. SMS : `sendSms(to, body, kind)` (`@/lib/sms`).
+- Cachet et signature des reçus : `Settings.signatureKey` (Admin → Paramètres → Entreprise). La photo est détourée dans le navigateur (`cutOutInk`, `@/lib/ink-extract-client` ; algorithme pur dans `@/lib/ink-extract`), stockée en privé (`private/signature/…`) et servie par `/api/signature` aux administrateurs et aux propriétaires connectés uniquement — jamais par une adresse publique.
+- Connexion de l'espace client sans SMS : `OTP_TEST_CODE` (6 chiffres) est accepté à la place du code envoyé, uniquement tant que `SMS_PROVIDER=console`. Provisoire : à retirer avant l'ouverture aux vrais propriétaires.
 - Calculs financiers **uniquement** via `@/lib/finance` (`resolvePlan`, `buildSchedule`, `summarizeSale`) : les versements s'imputent dans l'ordre des échéances.
 - Statut `SOLD` d'un terrain : posé uniquement par la création d'une vente ; l'annulation d'une vente remet le terrain `AVAILABLE`.
-- Fichiers : `/api/admin/upload` (client : `uploadFile()`), clés `public/…` servies par `/api/files/…`, clés `private/…` uniquement via `/api/documents/[id]` (contrôle d'accès).
+- Fichiers : `/api/admin/upload` (client : `uploadFile()`), clés `public/…` servies par `/api/files/…`, clés `private/…` uniquement via `/api/documents/[id]` (contrôle d'accès). Taille maximale : `UPLOAD_MAX_MB` (`@/lib/upload-limits`, 50 Mo = limite du bucket Supabase). Toute écriture de fichier passe par `putObject()` (`@/lib/storage`), y compris dans le seed.
 - Libellés et couleurs de statut : `@/lib/labels`. Formatage : `@/lib/format` (`formatMoney`, `formatDate`, `formatArea`…), téléphones : `@/lib/phone` (E.164).
 
 ## Design system

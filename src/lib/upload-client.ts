@@ -1,5 +1,7 @@
 "use client"
 
+import { UPLOAD_MAX_BYTES, UPLOAD_TOO_LARGE } from "@/lib/upload-limits"
+
 export type UploadedFile = { key: string; url: string | null; size: number; mimeType: string; filename: string }
 
 /** Téléverse un fichier vers /api/admin/upload avec suivi de progression. */
@@ -8,6 +10,7 @@ export function uploadFile(
   opts: { scope: "public" | "private"; folder: string; onProgress?: (ratio: number) => void },
 ): Promise<UploadedFile> {
   return new Promise((resolve, reject) => {
+    if (file.size > UPLOAD_MAX_BYTES) return reject(new Error(UPLOAD_TOO_LARGE))
     const form = new FormData()
     form.append("file", file)
     form.append("scope", opts.scope)

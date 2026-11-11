@@ -9,7 +9,12 @@ const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient; prisma
 function createClient(connectionString: string | undefined) {
   // DATABASE_URL : pooler Supabase en mode transaction (port 6543) ; la CLI Prisma utilise DIRECT_URL (prisma.config.ts)
   const adapter = new PrismaPg({ connectionString, ssl: databaseSsl(connectionString) })
-  return new PrismaClient({ adapter })
+  return new PrismaClient({
+    adapter,
+    // La base est distante (≈ 100 ms par requête) : les 5 s par défaut de Prisma font échouer
+    // toute transaction de plus d'une quarantaine de requêtes (erreur P2028, rien n'est enregistré).
+    transactionOptions: { maxWait: 10_000, timeout: 30_000 },
+  })
 }
 
 const connectionString = process.env.DATABASE_URL

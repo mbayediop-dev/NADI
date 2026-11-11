@@ -2,6 +2,7 @@ import "server-only"
 import { db } from "@/lib/db"
 import { fullName } from "@/lib/format"
 import type { AppSettings } from "@/lib/settings"
+import { signatureUrl } from "@/lib/signature"
 import type { ReceiptData } from "@/components/shared/receipt"
 
 /** Données d'un reçu de versement. `buyerId` restreint l'accès à l'acheteur concerné (espace client). */
@@ -16,7 +17,13 @@ export async function getReceiptData(paymentId: string, settings: AppSettings, o
     .filter((p) => p.paidAt < payment.paidAt || (p.paidAt.getTime() === payment.paidAt.getTime() && p.createdAt <= payment.createdAt))
     .reduce((sum, p) => sum + p.amount, 0)
   return {
-    company: { name: settings.companyName, address: settings.companyAddress, phone: settings.companyPhone, email: settings.companyEmail },
+    company: {
+      name: settings.companyName,
+      address: settings.companyAddress,
+      phone: settings.companyPhone,
+      email: settings.companyEmail,
+      signatureUrl: settings.signatureKey ? signatureUrl(settings.signatureKey) : null,
+    },
     currency: settings.currencyLabel,
     payment: {
       receiptNumber: payment.receiptNumber,

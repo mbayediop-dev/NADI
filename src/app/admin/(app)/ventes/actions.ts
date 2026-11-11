@@ -179,9 +179,10 @@ export async function createSale(input: z.input<typeof createSaleSchema>): Promi
             firstDueDate: toDueDate(data.plan.firstDueDate),
             signedAt,
             notes: data.notes || null,
-            installments: { create: schedule },
           },
         })
+        // Une seule requête pour tout l'échéancier (une création imbriquée en ferait une par échéance)
+        await tx.installment.createMany({ data: schedule.map((line) => ({ ...line, saleId: sale.id })) })
         await tx.lot.update({ where: { id: lot.id }, data: { status: "SOLD", reservedNote: null } })
 
         if (data.requestId) {
@@ -386,9 +387,9 @@ export async function updateSchedule(saleId: string, input: z.input<typeof planS
           frequency: plan.frequency,
           customIntervalDays: plan.frequency === "CUSTOM" ? (plan.customIntervalDays ?? null) : null,
           firstDueDate: toDueDate(plan.firstDueDate),
-          installments: { create: schedule },
         },
       })
+      await tx.installment.createMany({ data: schedule.map((line) => ({ ...line, saleId })) })
       await syncSaleStatus(tx, saleId)
       return sale
     })

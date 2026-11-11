@@ -27,6 +27,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { FileDropzone } from "@/components/shared/file-dropzone"
+import { UPLOAD_MAX_MB } from "@/lib/upload-limits"
 import { FormField } from "@/components/admin/settings/form-bits"
 
 export type MediaItem = { id: string; type: MediaType; url: string; caption: string | null; size: number | null }
@@ -317,7 +318,7 @@ function MediaManager({ update }: { update: UpdateItem }) {
         <h3 className="font-semibold">Photos et vidéos</h3>
         <p className="text-sm text-muted-foreground">La première image sert de couverture. Les vidéos lourdes : préférez un lien YouTube.</p>
       </div>
-      <FileDropzone onFiles={handleFiles} multiple accept="image/*,video/mp4,video/webm,video/quicktime" disabled={uploads.length > 0} hint="Images (JPG, PNG, WebP) et vidéos (MP4) · 250 Mo max. par fichier" />
+      <FileDropzone onFiles={handleFiles} multiple accept="image/*,video/mp4,video/webm,video/quicktime" disabled={uploads.length > 0} hint={`Images (JPG, PNG, WebP) et vidéos (MP4) · ${UPLOAD_MAX_MB} Mo max. par fichier`} />
       {uploads.length > 0 && (
         <ul className="space-y-2">
           {uploads.map((u) => (

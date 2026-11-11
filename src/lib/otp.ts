@@ -31,6 +31,16 @@ function sameHash(a: string, b: string) {
   return left.length === right.length && timingSafeEqual(left, right)
 }
 
+/**
+ * Code fixe de test (OTP_TEST_CODE, 6 chiffres) — provisoire, pour essayer l'espace client avant le branchement des SMS.
+ * Il n'est accepté que tant que les SMS sont simulés (SMS_PROVIDER=console) : dès qu'un vrai fournisseur est configuré,
+ * il cesse de fonctionner même si la variable est restée en place.
+ */
+function testCode() {
+  const code = process.env.OTP_TEST_CODE?.trim()
+  return code && /^\d{6}$/.test(code) && smsIsSimulated() ? code : null
+}
+
 function checkIp(ip: string | null) {
   if (!ip) return
   const now = Date.now()
@@ -107,7 +117,9 @@ export async function checkOtp(input: string, code: string) {
   if (otp.attempts >= MAX_ATTEMPTS) throw new UserError("Trop d'essais incorrects. Demandez un nouveau code.")
   if (otp.consumedAt) throw new UserError("Ce code n'est plus valide. Demandez-en un nouveau.")
   if (otp.expiresAt.getTime() < Date.now()) throw new UserError("Ce code a expiré. Demandez-en un nouveau.")
-  if (!sameHash(otp.codeHash, hashCode(phone, code))) {
+  const fixed = testCode()
+  const matches = sameHash(otp.codeHash, hashCode(phone, code)) || (fixed !== null && sameHash(hashCode(phone, fixed), hashCode(phone, code)))
+  if (!matches) {
     const attempts = otp.attempts + 1
     await db.otpCode.update({
       where: { id: otp.id },

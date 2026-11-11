@@ -48,9 +48,11 @@ export function PhoneInput({
   disabled?: boolean
   size?: "default" | "lg"
 }) {
-  const initial = React.useMemo(() => split(value), []) // eslint-disable-line react-hooks/exhaustive-deps
-  const [country, setCountry] = React.useState(initial.country)
-  const [local, setLocal] = React.useState(initial.local)
+  const [state, setState] = React.useState(() => ({ ...split(value), emitted: value }))
+  // Valeur changée de l'extérieur (formulaire réinitialisé, autre fiche chargée) : l'affichage se resynchronise,
+  // sinon le champ montrerait encore l'ancienne saisie alors que le formulaire enregistrerait une autre valeur.
+  if (value !== state.emitted) setState({ ...split(value), emitted: value })
+  const { country, local } = state
   const current = COUNTRIES.find((c) => c.code === country) ?? COUNTRIES[0]
 
   function emit(nextCountry: string, nextLocal: string) {
@@ -58,7 +60,9 @@ export function PhoneInput({
     let digits = nextLocal.replace(/[^\d+]/g, "")
     // « 00 33 6… » = format international saisi sans le « + »
     if (digits.startsWith("00")) digits = `+${digits.slice(2)}`
-    onChange(digits.startsWith("+") ? digits : digits ? `${dial}${digits.replace(/^0+(?=\d{8,})/, "")}` : "")
+    const next = digits.startsWith("+") ? digits : digits ? `${dial}${digits.replace(/^0+(?=\d{8,})/, "")}` : ""
+    setState({ country: nextCountry, local: nextLocal, emitted: next })
+    onChange(next)
   }
 
   return (
@@ -77,10 +81,7 @@ export function PhoneInput({
           aria-label="Indicatif pays"
           value={country}
           disabled={disabled}
-          onChange={(e) => {
-            setCountry(e.target.value)
-            emit(e.target.value, local)
-          }}
+          onChange={(e) => emit(e.target.value, local)}
           className="absolute inset-0 cursor-pointer opacity-0"
         >
           {COUNTRIES.map((c) => (
@@ -99,10 +100,7 @@ export function PhoneInput({
         disabled={disabled}
         placeholder={current.placeholder}
         value={local}
-        onChange={(e) => {
-          setLocal(e.target.value)
-          emit(country, e.target.value)
-        }}
+        onChange={(e) => emit(country, e.target.value)}
         className="min-w-0 flex-1 bg-transparent px-3 tabular outline-none placeholder:text-muted-foreground"
       />
     </div>

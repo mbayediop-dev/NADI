@@ -1,8 +1,6 @@
 // Données de démonstration — npm run db:seed
 // ⚠️ Efface toutes les données existantes. Tout le contenu (noms, prix, acheteurs…) est fictif.
 import "dotenv/config"
-import { mkdir, writeFile } from "node:fs/promises"
-import path from "node:path"
 import bcrypt from "bcryptjs"
 import { addDays, addMonths, subDays, subMonths } from "date-fns"
 import { PrismaPg } from "@prisma/adapter-pg"
@@ -10,6 +8,7 @@ import { PrismaClient } from "../src/generated/prisma/client"
 import type { PaymentFrequency, PaymentMethod } from "../src/generated/prisma/enums"
 import { databaseSsl } from "../src/lib/db-ssl"
 import { buildSchedule, resolvePlan, toDueDate } from "../src/lib/finance"
+import { guessMime, putObject } from "../src/lib/storage"
 import { buildLayout, PLAN } from "./seed/layout"
 
 const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL, ssl: databaseSsl() }) })
@@ -78,11 +77,10 @@ function makePdf(title: string, lines: string[]) {
   return Buffer.from(out, "latin1")
 }
 
+// Écrit via le pilote configuré (STORAGE_DRIVER) : sinon, avec Supabase Storage, la base référencerait des fichiers restés sur le disque local
 async function storeFile(key: string, data: Buffer) {
-  const file = path.resolve(process.cwd(), process.env.STORAGE_LOCAL_DIR ?? "./storage", key)
-  await mkdir(path.dirname(file), { recursive: true })
-  await writeFile(file, data)
-  return data.byteLength
+  const stored = await putObject(key, data, guessMime(key))
+  return stored.size
 }
 
 async function main() {

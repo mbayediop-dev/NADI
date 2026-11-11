@@ -2,11 +2,13 @@ import type { PaymentMethod } from "@/generated/prisma/enums"
 import { formatArea, formatDate, formatDateLong, formatMoney } from "@/lib/format"
 import { PAYMENT_METHOD } from "@/lib/labels"
 import { formatPhone } from "@/lib/phone"
+import { cn } from "@/lib/utils"
 import { numberToFrenchWords } from "@/lib/number-words"
 import { Logo } from "@/components/brand/logo"
 
 export type ReceiptData = {
-  company: { name: string; address: string; phone: string; email: string }
+  /** signatureUrl : cachet et signature de l'entreprise (image à fond transparent), s'ils sont renseignés dans les paramètres */
+  company: { name: string; address: string; phone: string; email: string; signatureUrl: string | null }
   currency: string
   payment: { receiptNumber: string; amount: number; paidAt: Date; method: PaymentMethod; reference: string | null; note: string | null }
   sale: { reference: string; price: number }
@@ -91,12 +93,22 @@ export function Receipt({ data }: { data: ReceiptData }) {
           </div>
         </dl>
 
-        <div className="flex items-end justify-between gap-6 pt-6">
+        <div className="flex flex-col gap-6 pt-6 sm:flex-row sm:items-end sm:justify-between print:flex-row print:items-end print:justify-between">
           <p className="max-w-xs text-xs text-[oklch(0.5_0.02_175)]">
             Reçu généré électroniquement par {company.name}. Conservez-le précieusement : il fait foi du versement indiqué.
           </p>
-          <div className="w-48 text-center">
-            <div className="h-16 border-b border-dashed border-[oklch(0.7_0.01_175)]" />
+          <div className={cn("shrink-0 self-end text-center", company.signatureUrl ? "w-56" : "w-48")}>
+            <div className={cn("relative border-b border-dashed border-[oklch(0.7_0.01_175)]", company.signatureUrl ? "h-32" : "h-16")}>
+              {company.signatureUrl && (
+                // Le cachet chevauche la ligne de signature, comme un tampon apposé à la main.
+                // eslint-disable-next-line @next/next/no-img-element -- image privée servie avec contrôle d'accès (/api/signature)
+                <img
+                  src={company.signatureUrl}
+                  alt={`Cachet et signature de ${company.name}`}
+                  className="absolute -bottom-3 left-1/2 h-36 w-auto max-w-none -translate-x-1/2 object-contain"
+                />
+              )}
+            </div>
             <p className="mt-2 text-xs font-semibold">Pour {company.name}</p>
           </div>
         </div>

@@ -11,6 +11,8 @@ import { logActivity } from "@/lib/activity"
 import { normalizePhone } from "@/lib/phone"
 import { sendSms } from "@/lib/sms"
 import { env } from "@/lib/env"
+import { isSignatureKey } from "@/lib/signature"
+import { deleteObject } from "@/lib/storage"
 
 function refresh() {
   revalidatePath("/admin/parametres")
@@ -69,6 +71,12 @@ const companySchema = z.object({
   companyAddress: text(200),
   businessHours: text(80),
   logoUrl: imageUrl,
+  signatureKey: z
+    .string()
+    .max(300)
+    .nullish()
+    .transform((v) => v || null)
+    .refine((v) => !v || isSignatureKey(v), "Image du cachet invalide"),
   socialFacebook: optionalUrl,
   socialInstagram: optionalUrl,
   socialLinkedin: optionalUrl,
@@ -80,7 +88,11 @@ const companySchema = z.object({
 export async function saveCompanySettings(input: z.input<typeof companySchema>): Promise<ActionResult<null>> {
   return run(async () => {
     const admin = await assertAdmin("ADMIN")
-    await saveSettings(companySchema.parse(input))
+    const data = companySchema.parse(input)
+    const previous = await db.settings.findUnique({ where: { id: 1 }, select: { signatureKey: true } })
+    await saveSettings(data)
+    // L'ancien cachet ne doit pas rester dans le stockage une fois remplacé ou retiré
+    if (previous?.signatureKey && previous.signatureKey !== data.signatureKey) await deleteObject(previous.signatureKey)
     await logActivity({ type: "settings", message: "Informations de l'entreprise mises à jour", actorId: admin.id })
     refresh()
     return ok(null, "Informations enregistrées")

@@ -26,6 +26,18 @@ async function hasLiveSale(lotId: string) {
   return (await db.sale.count({ where: { lotId, status: { not: "CANCELLED" } } })) > 0
 }
 
+/**
+ * Applique prix et acompte à plusieurs terrains en une seule requête (atomique, un seul aller-retour).
+ * Une mise à jour par terrain dans une transaction dépasse le délai autorisé dès que la base est distante.
+ */
+function updateLotAmounts(rows: { id: string; price: number | null; depositAmount: number | null }[]) {
+  return db.$executeRaw`
+    UPDATE "Lot" AS l
+    SET "price" = v."price", "depositAmount" = v."depositAmount", "updatedAt" = (now() AT TIME ZONE 'UTC')
+    FROM jsonb_to_recordset(${JSON.stringify(rows)}::jsonb) AS v("id" text, "price" double precision, "depositAmount" double precision)
+    WHERE l."id" = v."id"`
+}
+
 function uniqueError(error: unknown): never {
   if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
     throw new UserError("Ce numéro de terrain existe déjà.")
@@ -140,27 +152,26 @@ export async function bulkSetPrice(ids: string[], input: z.input<typeof bulkPric
     const lotIds = idsSchema.parse(ids)
     const { mode, value, rounding, adjustDeposit } = bulkPriceSchema.parse(input)
     const settings = await getSettings()
-    const lots = await db.lot.findMany({ where: { id: { in: lotIds } } })
-    let updated = 0
+    const lots = await db.lot.findMany({ where: { id: { in: lotIds } }, select: { id: true, status: true, areaM2: true, price: true, depositAmount: true } })
+    const rows: { id: string; price: number; depositAmount: number | null }[] = []
     let skipped = 0
-    await db.$transaction(async (tx) => {
-      for (const lot of lots) {
-        if (lot.status === "SOLD") {
-          skipped++
-          continue
-        }
-        const price = roundTo(mode === "fixed" ? value : value * lot.areaM2, rounding)
-        let depositAmount = lot.depositAmount
-        if (adjustDeposit) {
-          const rate = lot.price && lot.depositAmount != null ? lot.depositAmount / lot.price : settings.defaultDepositRate / 100
-          depositAmount = roundTo(price * rate, 1000)
-        } else if (depositAmount != null && depositAmount > price) {
-          depositAmount = price
-        }
-        await tx.lot.update({ where: { id: lot.id }, data: { price, depositAmount } })
-        updated++
+    for (const lot of lots) {
+      if (lot.status === "SOLD") {
+        skipped++
+        continue
       }
-    })
+      const price = roundTo(mode === "fixed" ? value : value * lot.areaM2, rounding)
+      let depositAmount = lot.depositAmount
+      if (adjustDeposit) {
+        const rate = lot.price && lot.depositAmount != null ? lot.depositAmount / lot.price : settings.defaultDepositRate / 100
+        depositAmount = Math.min(price, roundTo(price * rate, 1000))
+      } else if (depositAmount != null && depositAmount > price) {
+        depositAmount = price
+      }
+      rows.push({ id: lot.id, price, depositAmount })
+    }
+    if (rows.length > 0) await updateLotAmounts(rows)
+    const updated = rows.length
     await logActivity({
       type: "lot",
       message: `Prix mis à jour sur ${updated} terrain${updated > 1 ? "s" : ""} (${mode === "perM2" ? `${value} / m²` : `${value}`})`,
@@ -186,21 +197,20 @@ export async function bulkSetDeposit(ids: string[], input: z.input<typeof bulkDe
     const lotIds = idsSchema.parse(ids)
     const { mode, value, rounding } = bulkDepositSchema.parse(input)
     if (mode === "percent" && value > 100) return fail("Le pourcentage doit être compris entre 0 et 100")
-    const lots = await db.lot.findMany({ where: { id: { in: lotIds } } })
-    let updated = 0
+    const lots = await db.lot.findMany({ where: { id: { in: lotIds } }, select: { id: true, status: true, price: true } })
+    const rows: { id: string; price: number | null; depositAmount: number }[] = []
     let skipped = 0
-    await db.$transaction(async (tx) => {
-      for (const lot of lots) {
-        if (lot.status === "SOLD" || (mode === "percent" && !lot.price)) {
-          skipped++
-          continue
-        }
-        let deposit = mode === "none" ? 0 : mode === "fixed" ? value : roundTo(((lot.price ?? 0) * value) / 100, rounding)
-        if (lot.price != null) deposit = Math.min(deposit, lot.price)
-        await tx.lot.update({ where: { id: lot.id }, data: { depositAmount: Math.round(deposit) } })
-        updated++
+    for (const lot of lots) {
+      if (lot.status === "SOLD" || (mode === "percent" && !lot.price)) {
+        skipped++
+        continue
       }
-    })
+      let deposit = mode === "none" ? 0 : mode === "fixed" ? value : roundTo(((lot.price ?? 0) * value) / 100, rounding)
+      if (lot.price != null) deposit = Math.min(deposit, lot.price)
+      rows.push({ id: lot.id, price: lot.price, depositAmount: Math.round(deposit) })
+    }
+    if (rows.length > 0) await updateLotAmounts(rows)
+    const updated = rows.length
     await logActivity({ type: "lot", message: `Acompte mis à jour sur ${updated} terrain${updated > 1 ? "s" : ""}`, actorId: admin.id })
     revalidateLots()
     return ok({ updated, skipped }, `${updated} terrain${updated > 1 ? "s" : ""} mis à jour${skipped ? ` · ${skipped} ignoré${skipped > 1 ? "s" : ""}` : ""}`)
@@ -292,19 +302,23 @@ export async function applyDefaultPlanToLots(): Promise<ActionResult<{ updated: 
     const settings = await getSettings()
     const lots = await db.lot.findMany({
       where: { status: { in: ["AVAILABLE", "RESERVED"] }, price: { not: null }, depositAmount: null, installmentsCount: null, frequency: null },
+      select: { id: true, price: true },
     })
-    await db.$transaction(
-      lots.map((lot) =>
-        db.lot.update({
-          where: { id: lot.id },
-          data: {
-            depositAmount: lot.price ? roundTo((lot.price * settings.defaultDepositRate) / 100, 1000) : null,
-            installmentsCount: settings.defaultInstallments,
-            frequency: settings.defaultFrequency,
-          },
+    if (lots.length > 0) {
+      await db.$transaction([
+        updateLotAmounts(
+          lots.map((lot) => ({
+            id: lot.id,
+            price: lot.price,
+            depositAmount: lot.price ? Math.min(lot.price, roundTo((lot.price * settings.defaultDepositRate) / 100, 1000)) : null,
+          })),
+        ),
+        db.lot.updateMany({
+          where: { id: { in: lots.map((lot) => lot.id) } },
+          data: { installmentsCount: settings.defaultInstallments, frequency: settings.defaultFrequency },
         }),
-      ),
-    )
+      ])
+    }
     await logActivity({ type: "lot", message: `Modalités par défaut appliquées à ${lots.length} terrain${lots.length > 1 ? "s" : ""}`, actorId: admin.id })
     revalidateLots()
     return ok({ updated: lots.length }, lots.length ? `Modalités appliquées à ${lots.length} terrain${lots.length > 1 ? "s" : ""}` : "Tous les terrains ont déjà des modalités")
@@ -348,33 +362,38 @@ export async function applyLotImport(rows: unknown[]): Promise<ActionResult<{ cr
     ])
     const byNumber = new Map(existing.map((l) => [l.number.toLowerCase(), l]))
     const locked = new Set(sales.map((s) => s.lotId))
-    let created = 0
-    let updated = 0
+    const creates: Prisma.LotCreateManyInput[] = []
+    const updates: Prisma.LotUpdateArgs[] = []
+    const seen = new Set<string>()
+    for (const row of parsed) {
+      const { number, status, attributes, ...rest } = row
+      const key = number.toLowerCase()
+      if (seen.has(key)) throw new UserError(`Le terrain n° ${number} figure plusieurs fois dans le fichier.`)
+      seen.add(key)
+      const current = byNumber.get(key)
+      if (current) {
+        const mergedAttributes = { ...((current.attributes as Record<string, unknown>) ?? {}), ...attributes }
+        updates.push({
+          where: { id: current.id },
+          data: {
+            ...rest,
+            attributes: mergedAttributes as Prisma.InputJsonValue,
+            ...(status && !locked.has(current.id) ? { status, ...(status !== "RESERVED" ? { reservedNote: null } : {}) } : {}),
+          },
+        })
+      } else {
+        creates.push({ number, ...rest, attributes: attributes as Prisma.InputJsonValue, areaM2: rest.areaM2 ?? 0, status: status ?? "AVAILABLE" })
+      }
+    }
+    const created = creates.length
+    const updated = updates.length
     await db.$transaction(
       async (tx) => {
-        for (const row of parsed) {
-          const { number, status, attributes, ...rest } = row
-          const current = byNumber.get(number.toLowerCase())
-          if (current) {
-            const mergedAttributes = { ...((current.attributes as Record<string, unknown>) ?? {}), ...attributes }
-            await tx.lot.update({
-              where: { id: current.id },
-              data: {
-                ...rest,
-                attributes: mergedAttributes as Prisma.InputJsonValue,
-                ...(status && !locked.has(current.id) ? { status, ...(status !== "RESERVED" ? { reservedNote: null } : {}) } : {}),
-              },
-            })
-            updated++
-          } else {
-            await tx.lot.create({
-              data: { number, ...rest, attributes: attributes as Prisma.InputJsonValue, areaM2: rest.areaM2 ?? 0, status: status ?? "AVAILABLE" },
-            })
-            created++
-          }
-        }
+        // Créations en une seule requête ; les mises à jour (valeurs propres à chaque ligne) restent unitaires
+        if (creates.length > 0) await tx.lot.createMany({ data: creates })
+        for (const update of updates) await tx.lot.update(update)
       },
-      { timeout: 60_000 },
+      { timeout: 60_000 + updates.length * 500 },
     )
     await logActivity({ type: "lot", message: `Import Excel : ${created} terrain${created > 1 ? "s" : ""} créé${created > 1 ? "s" : ""}, ${updated} mis à jour`, actorId: admin.id })
     revalidateLots()

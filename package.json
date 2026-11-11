@@ -14,6 +14,7 @@
     "db:studio": "prisma studio",
     "plan:generate": "tsx scripts/generate-plan.ts",
     "storage:check": "tsx --conditions=react-server scripts/storage-check.ts",
+    "storage:sync": "tsx --conditions=react-server scripts/storage-sync.ts",
     "db:check": "tsx scripts/db-check.ts",
     "postinstall": "prisma generate"
   },

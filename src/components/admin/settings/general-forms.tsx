@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { PhoneInput } from "@/components/shared/phone-input"
 import { FormField, FormSection, parseOptionalNumber, TagInput } from "@/components/admin/settings/form-bits"
 import { ImageField } from "@/components/admin/settings/image-field"
+import { SignatureField } from "@/components/admin/settings/signature-field"
 import { SaveBar, useFormState } from "@/components/admin/settings/settings-shell"
 import { FrequencySelect } from "@/components/admin/lots/plan-fields"
 
@@ -31,6 +32,7 @@ export type CompanyValues = {
   companyAddress: string
   businessHours: string
   logoUrl: string | null
+  signatureKey: string | null
   socialFacebook: string
   socialInstagram: string
   socialLinkedin: string
@@ -73,6 +75,15 @@ export function CompanyForm({ initial, canEdit }: { initial: CompanyValues; canE
               <div className="max-w-40">
                 <ImageField value={v.logoUrl} onChange={(url) => form.set("logoUrl", url)} folder="branding" aspect="aspect-square" />
               </div>
+            </FormField>
+            <FormField
+              label="Cachet et signature (reçus)"
+              htmlFor="c-signature"
+              className="sm:col-span-2"
+              error={errors.signatureKey}
+              hint="Apposés au bas de chaque reçu de versement. Photographiez le cachet signé sur une feuille blanche : le fond est retiré automatiquement."
+            >
+              <SignatureField value={v.signatureKey} onChange={(key) => form.set("signatureKey", key)} />
             </FormField>
           </div>
         </FormSection>

@@ -10,15 +10,17 @@ import { normalizePhone } from "@/lib/phone"
 import { getSettings } from "@/lib/settings"
 import { sendSms } from "@/lib/sms"
 
-// Limitation simple des envois (mémoire du processus) : 3 demandes / 10 min par IP et par téléphone
+// Limitation simple des envois (mémoire du processus), par fenêtre de 10 min : 3 demandes par téléphone, 20 par adresse IP.
+// La limite par IP reste large : les opérateurs mobiles font sortir de très nombreux abonnés par la même adresse.
 const WINDOW_MS = 10 * 60 * 1000
-const MAX_PER_WINDOW = 3
+const MAX_PER_PHONE = 3
+const MAX_PER_IP = 20
 const hits = new Map<string, number[]>()
 
-function rateLimited(key: string) {
+function rateLimited(key: string, max: number) {
   const now = Date.now()
   const recent = (hits.get(key) ?? []).filter((t) => now - t < WINDOW_MS)
-  if (recent.length >= MAX_PER_WINDOW) {
+  if (recent.length >= max) {
     hits.set(key, recent)
     return true
   }
@@ -59,8 +61,10 @@ export async function createReservationRequest(input: ReservationInput): Promise
     }
 
     const h = await headers()
-    const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? h.get("x-real-ip") ?? "local"
-    if (rateLimited(`ip:${ip}`) || rateLimited(`phone:${phone}`)) {
+    // Sans adresse IP transmise (pas de proxy devant le serveur), on ne limite que par téléphone :
+    // une clé commune bloquerait tous les visiteurs dès la troisième demande.
+    const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || null
+    if ((ip && rateLimited(`ip:${ip}`, MAX_PER_IP)) || rateLimited(`phone:${phone}`, MAX_PER_PHONE)) {
       return fail("Vous avez déjà envoyé plusieurs demandes. Merci de patienter quelques minutes : nous vous rappelons très vite.")
     }
 

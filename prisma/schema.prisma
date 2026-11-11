@@ -49,6 +49,7 @@ model Settings {
   companyEmail    String  @default("")
   companyAddress  String  @default("")
   logoUrl         String?
+  signatureKey    String? // cachet + signature des reçus : clé du stockage privé, servie par /api/signature
 
   // Site / lotissement
   siteName        String  @default("Cité NADI")

@@ -59,6 +59,7 @@ async function SettingsContent({ searchParams }: { searchParams: PageProps<"/adm
           companyAddress: settings.companyAddress,
           businessHours: settings.businessHours,
           logoUrl: settings.logoUrl,
+          signatureKey: settings.signatureKey,
           socialFacebook: settings.socialFacebook ?? "",
           socialInstagram: settings.socialInstagram ?? "",
           socialLinkedin: settings.socialLinkedin ?? "",

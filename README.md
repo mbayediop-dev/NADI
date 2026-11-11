@@ -20,7 +20,8 @@ npm run dev                   # http://localhost:3000
 
 Dans le tableau de bord Supabase : **Connect → ORMs → Prisma** donne `DATABASE_URL` (pooler, port 6543) et `DIRECT_URL`
 (port 5432) ; **Project Settings → API** donne `SUPABASE_URL` et la clé `service_role` (jamais exposée au navigateur).
-Le bucket Storage (`SUPABASE_STORAGE_BUCKET`, privé) est créé automatiquement au premier envoi de fichier s'il n'existe pas.
+Le bucket Storage (`SUPABASE_STORAGE_BUCKET`, privé) doit exister dans le projet Supabase. `npm run storage:check` vérifie l'envoi, la lecture
+et la suppression d'un fichier test ; `npm run db:check` vérifie la connexion à la base.
 
 Sans Supabase, n'importe quel PostgreSQL 15+ convient (`DATABASE_URL` seul) avec `STORAGE_DRIVER=local` :
 `brew services start postgresql@17 && createdb nadi`, puis `DATABASE_URL="postgresql://<votre-utilisateur>@localhost:5432/nadi?schema=public"`.
@@ -30,7 +31,7 @@ Sans Supabase, n'importe quel PostgreSQL 15+ convient (`DATABASE_URL` seul) avec
 | Espace | Identifiant |
 | --- | --- |
 | Administration | `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` (par défaut `admin@nadigroup.sn` / `Nadi2026!`) |
-| Espace client | `+221 77 123 45 01` (Aminata Diop) — en mode `SMS_PROVIDER=console`, le code s'affiche à l'écran (« Mode démo ») et dans le terminal |
+| Espace client | `+221 77 123 45 01` (Aminata Diop) — en mode `SMS_PROVIDER=console`, le code s'affiche à l'écran (« Mode démo ») et dans le terminal ; un code fixe de test peut être défini avec `OTP_TEST_CODE` (voir `.env.example`) |
 
 Toutes les données de démonstration (nom du site, prix, acheteurs, actualités…) sont **fictives** et se remplacent depuis l'administration. Les photos de `public/images/demo/` sont des visuels provisoires (extraits de la maquette, en basse résolution) : remplacez-les par de vraies photos du domaine dans **Administration → Paramètres → Site et page d'accueil** et dans les actualités du chantier. Sans données de démo, la première visite de `/admin/login` propose de créer le compte du responsable.
 
@@ -45,6 +46,9 @@ Toutes les données de démonstration (nom du site, prix, acheteurs, actualités
    - `STORAGE_DRIVER=supabase` (recommandé) : bucket privé Supabase Storage, fichiers servis par l'application avec contrôle d'accès ;
    - serveur avec disque persistant (VPS) : `STORAGE_DRIVER=local` et un `STORAGE_LOCAL_DIR` sauvegardé ;
    - `STORAGE_DRIVER=s3` : tout service compatible S3 (Cloudflare R2, Amazon S3…).
+
+   Après un changement de pilote, `npm run storage:sync` envoie vers le nouveau stockage les fichiers référencés en base qui n'y sont pas encore
+   (`npm run storage:sync -- --check` pour un simple contrôle). Taille maximale d'un envoi : `NEXT_PUBLIC_UPLOAD_MAX_MB` (50 Mo par défaut, limite du bucket Supabase).
 5. **Rappels automatiques** : appeler une fois par jour
    `GET https://<votre-domaine>/api/cron/reminders` avec l'en-tête `Authorization: Bearer <CRON_SECRET>`
    (cron Vercel, cron système, ou service type cron-job.org).
