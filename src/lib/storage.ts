@@ -101,12 +101,35 @@ const bucket = () => {
 // Pilote Supabase Storage (API REST, clé « service_role » côté serveur uniquement)
 // ─────────────────────────────────────────────────────────────
 
+/**
+ * Stockage mal configuré (variable absente, clé refusée, bucket inexistant). Le message ne cite que des noms de
+ * variables, jamais leur valeur : il peut être affiché tel quel à un administrateur.
+ */
+export class StorageSetupError extends Error {}
+
+/** Variable d'environnement sans les espaces ni les guillemets parfois collés avec la valeur chez l'hébergeur. */
+function envValue(name: string) {
+  return process.env[name]?.trim().replace(/^["']+|["']+$/g, "") || undefined
+}
+
 function supabaseConfig() {
-  const url = process.env.SUPABASE_URL?.replace(/\/$/, "")
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  const bucket = process.env.SUPABASE_STORAGE_BUCKET || "nadi"
-  if (!url || !key) throw new Error("SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY sont requis avec STORAGE_DRIVER=supabase")
+  // Uniquement SUPABASE_URL : pas de repli sur une autre variable, qui pourrait désigner un autre projet Supabase
+  const url = envValue("SUPABASE_URL")?.replace(/\/$/, "")
+  const key = envValue("SUPABASE_SERVICE_ROLE_KEY")
+  const bucket = envValue("SUPABASE_STORAGE_BUCKET") ?? "nadi"
+  if (!url || !key) {
+    const missing = [!url && "SUPABASE_URL", !key && "SUPABASE_SERVICE_ROLE_KEY"].filter(Boolean).join(" et ")
+    throw new StorageSetupError(`Stockage non configuré sur le serveur : variable ${missing} absente (requise avec STORAGE_DRIVER=supabase).`)
+  }
+  if (!/^https?:\/\/[^\s/]+$/.test(url)) throw new StorageSetupError("Stockage mal configuré sur le serveur : SUPABASE_URL doit être de la forme https://<ref>.supabase.co.")
   return { url, key, bucket }
+}
+
+/** Traduit un refus de Supabase Storage en cause exploitable (clé refusée, bucket absent…). */
+function supabaseRefusal(status: number, body: string, bucket: string) {
+  if (/bucket not found/i.test(body)) return new StorageSetupError(`Stockage mal configuré : le bucket « ${bucket} » n'existe pas dans le projet Supabase (SUPABASE_STORAGE_BUCKET).`)
+  if (/jws|jwt|unauthorized|invalid signature|api key/i.test(body)) return new StorageSetupError("Stockage mal configuré : Supabase refuse la clé SUPABASE_SERVICE_ROLE_KEY (valeur incomplète ou d'un autre projet).")
+  return new Error(`Supabase Storage : envoi refusé (${status} ${body.slice(0, 200)})`)
 }
 
 /** Chemin d'objet encodé segment par segment (les « / » sont conservés). */
@@ -133,7 +156,7 @@ export async function putObject(key: string, data: Buffer, contentType: string):
       headers: { "Content-Type": contentType, "x-upsert": "true", "Cache-Control": "31536000" },
       body: new Uint8Array(data),
     })
-    if (!res.ok) throw new Error(`Supabase Storage : envoi refusé (${res.status} ${(await res.text()).slice(0, 200)})`)
+    if (!res.ok) throw supabaseRefusal(res.status, await res.text(), supabaseConfig().bucket)
   } else if (env.storageDriver === "s3") {
     await s3Client().send(new PutObjectCommand({ Bucket: bucket(), Key: key, Body: data, ContentType: contentType }))
   } else {

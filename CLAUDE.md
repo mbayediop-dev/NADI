@@ -23,6 +23,7 @@ Application web responsive (pas d'app mobile) composée de trois espaces :
 npm run dev            # serveur de dev
 npm run typecheck      # tsc --noEmit
 npm run db:migrate     # nouvelle migration Prisma
+npm run db:deploy      # applique les migrations en attente — À LANCER AVANT DE POUSSER : la production (Vercel) se redéploie à chaque push et partage cette base
 npm run db:seed        # ⚠️ réinitialise la base avec les données de démo
 npm run plan:generate  # régénère public/plan/site-plan.svg
 npm run db:check       # teste la connexion à la base (DATABASE_URL et DIRECT_URL)

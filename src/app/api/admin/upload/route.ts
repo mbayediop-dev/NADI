@@ -1,5 +1,5 @@
 import { getAdmin, hasRole } from "@/lib/auth/admin"
-import { saveUpload } from "@/lib/storage"
+import { saveUpload, StorageSetupError } from "@/lib/storage"
 import { UPLOAD_MAX_BYTES, UPLOAD_TOO_LARGE } from "@/lib/upload-limits"
 
 const ALLOWED = /^(image\/|video\/|application\/pdf|application\/msword|application\/vnd\.openxmlformats|application\/vnd\.ms-excel|text\/csv)/
@@ -28,6 +28,8 @@ export async function POST(request: Request) {
   } catch (error) {
     // Sans cela le navigateur recevrait une page d'erreur 500 et n'afficherait qu'un message générique
     console.error("[upload]", error)
+    // Défaut de configuration : la cause exacte est donnée à l'administrateur (noms de variables uniquement)
+    if (error instanceof StorageSetupError) return Response.json({ error: error.message }, { status: 502 })
     return Response.json({ error: "Le fichier n'a pas pu être enregistré dans le stockage. Réessayez ou vérifiez la configuration du stockage." }, { status: 502 })
   }
   return Response.json({
