@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/brand"
 import { Suspense } from "react"
 import type { Metadata } from "next"
 import Link from "next/link"
@@ -112,7 +113,7 @@ async function PaymentsContent() {
                 <AlertTriangle className="mt-0.5 size-4 shrink-0" />
                 <span>
                   <strong>{formatMoney(summary.overdueAmount, currency)}</strong> en retard ({formatNumber(summary.overdueCount)} échéance
-                  {summary.overdueCount > 1 ? "s" : ""}). Merci de contacter NADI Group pour régulariser.
+                  {summary.overdueCount > 1 ? "s" : ""}). Merci de contacter {BRAND.name} pour régulariser.
                 </span>
               </p>
             )}

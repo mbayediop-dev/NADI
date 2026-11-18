@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/brand"
 import Link from "next/link"
 import { differenceInCalendarDays } from "date-fns"
 import { AlertTriangle, CalendarClock, CheckCircle2, PartyPopper, Ruler } from "lucide-react"
@@ -100,7 +101,7 @@ export function LotHero({ sale, currency, contact, now }: { sale: OwnerSale; cur
           <PartyPopper className="mt-0.5 size-5 shrink-0" />
           <div>
             <p className="font-bold">Félicitations, votre terrain est entièrement payé !</p>
-            <p className="text-sm opacity-80">Merci pour votre confiance. NADI Group vous contactera pour la suite des formalités.</p>
+            <p className="text-sm opacity-80">Merci pour votre confiance. {BRAND.name} vous contactera pour la suite des formalités.</p>
           </div>
         </div>
       ) : late ? (
@@ -113,7 +114,7 @@ export function LotHero({ sale, currency, contact, now }: { sale: OwnerSale; cur
               </p>
               <p className="text-sm text-white/85">
                 {formatNumber(summary.overdueCount)} échéance{summary.overdueCount > 1 ? "s" : ""} non réglée{summary.overdueCount > 1 ? "s" : ""}
-                {summary.daysLate > 0 && ` · depuis ${formatNumber(summary.daysLate)} jour${summary.daysLate > 1 ? "s" : ""}`}. Contactez NADI Group pour
+                {summary.daysLate > 0 && ` · depuis ${formatNumber(summary.daysLate)} jour${summary.daysLate > 1 ? "s" : ""}`}. Contactez {BRAND.name} pour
                 régulariser votre situation.
               </p>
             </div>

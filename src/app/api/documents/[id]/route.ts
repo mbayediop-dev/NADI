@@ -8,23 +8,29 @@ import { getObject, objectResponse } from "@/lib/storage"
  * - PUBLIC : tout le monde
  * - CLIENTS : propriétaires connectés (et administrateurs)
  * - document lié à une vente : l'acheteur concerné (et administrateurs)
+ * - document d'un projet de construction : le client du projet (et administrateurs), sauf s'il est interne
  * - PRIVATE : administrateurs uniquement
  */
 export async function GET(request: Request, ctx: RouteContext<"/api/documents/[id]">) {
   const { id } = await ctx.params
-  const doc = await db.document.findUnique({ where: { id }, include: { sale: { select: { buyerId: true } } } })
+  const doc = await db.document.findUnique({
+    where: { id },
+    include: { sale: { select: { buyerId: true } }, constructionProject: { select: { buyerId: true } } },
+  })
   if (!doc) return new Response("Introuvable", { status: 404 })
 
-  let allowed = doc.visibility === "PUBLIC" && !doc.saleId
+  let allowed = doc.visibility === "PUBLIC" && !doc.saleId && !doc.constructionProjectId
   if (!allowed) {
     const admin = await getAdmin()
     if (admin) allowed = true
     else if (doc.visibility !== "PRIVATE") {
       const buyer = await getBuyer()
       if (buyer) {
-        allowed = doc.sale
-          ? doc.sale.buyerId === buyer.id
-          : (await db.sale.count({ where: { buyerId: buyer.id, status: { not: "CANCELLED" } } })) > 0
+        allowed = doc.constructionProject
+          ? doc.constructionProject.buyerId === buyer.id
+          : doc.sale
+            ? doc.sale.buyerId === buyer.id
+            : (await db.sale.count({ where: { buyerId: buyer.id, status: { not: "CANCELLED" } } })) > 0
       }
     }
   }

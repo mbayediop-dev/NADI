@@ -222,7 +222,7 @@ export function PlanViewer({
                     <line x1="0" y1="0" x2="0" y2="10" stroke="oklch(0.7 0.01 240)" strokeWidth="4" />
                   </pattern>
                   <filter id="plan-glow" x="-30%" y="-30%" width="160%" height="160%">
-                    <feDropShadow dx="0" dy="3" stdDeviation="5" floodColor="oklch(0.25 0.04 170)" floodOpacity="0.45" />
+                    <feDropShadow dx="0" dy="3" stdDeviation="5" floodColor="oklch(0.24 0.05 257)" floodOpacity="0.45" />
                   </filter>
                 </defs>
                 {shapes.map(({ lot, points, cx, cy, fontSize }) => {
@@ -264,7 +264,7 @@ export function PlanViewer({
                           style={
                             DARK_LABEL.has(lot.status)
                               ? undefined
-                              : { paintOrder: "stroke", stroke: "oklch(0.2 0.03 170 / 0.35)", strokeWidth: fontSize * 0.12 }
+                              : { paintOrder: "stroke", stroke: "oklch(0.2 0.04 257 / 0.35)", strokeWidth: fontSize * 0.12 }
                           }
                         >
                           {lot.number}

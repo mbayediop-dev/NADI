@@ -90,7 +90,7 @@ export function Hero({ eyebrow, title, subtitle, imageUrl, thumbnails, amenities
               <Button
                 asChild
                 size="lg"
-                className="h-12 rounded-md bg-pine-deep px-6 text-[0.95rem] font-semibold text-white shadow-[0_14px_30px_-14px_oklch(0.288_0.053_169/0.8)] hover:bg-pine-deep/90"
+                className="h-12 rounded-md bg-pine-deep px-6 text-[0.95rem] font-semibold text-white shadow-[0_14px_30px_-14px_oklch(0.239_0.058_256.7/0.8)] hover:bg-pine-deep/90"
               >
                 <Link href="/terrains">
                   Découvrir les terrains

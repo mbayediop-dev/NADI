@@ -1,11 +1,16 @@
 // Libellés et couleurs partagés (utilisables côté serveur et client)
 import type {
   AdminRole,
+  ConstructionStatus,
   DocumentCategory,
+  ExpenseCategory,
+  ExpenseScope,
+  LandOrigin,
   LotStatus,
   MilestoneStatus,
   PaymentFrequency,
   PaymentMethod,
+  QuoteStatus,
   RequestStatus,
   SaleStatus,
   Visibility,
@@ -117,6 +122,9 @@ export const DOCUMENT_CATEGORY: Record<DocumentCategory, string> = {
   RECEIPT: "Reçu",
   TECHNICAL: "Technique",
   OTHER: "Autre",
+  PERMIT: "Permis et autorisations",
+  QUOTE: "Offre / devis",
+  INVOICE: "Facture",
 }
 
 export const ADMIN_ROLE: Record<AdminRole, { label: string; hint: string }> = {
@@ -138,3 +146,73 @@ export const INSTALLMENT_STATUS = {
   DUE_SOON: { label: "Bientôt dû", tone: "bg-gold/20 text-gold-strong ring-gold/40" },
   UPCOMING: { label: "À venir", tone: "bg-muted text-muted-foreground ring-border" },
 } as const
+
+// ─────────────────────────────────────────────────────────────
+// Construction
+// ─────────────────────────────────────────────────────────────
+
+export const CONSTRUCTION_STATUS: Record<ConstructionStatus, { label: string; step: string; tone: string; hint: string }> = {
+  REQUESTED: { label: "Demande reçue", step: "Demande", tone: "bg-gold/20 text-gold-strong ring-gold/40", hint: "Demande à étudier" },
+  STUDY: { label: "Étude en cours", step: "Étude", tone: "bg-primary/10 text-primary ring-primary/25", hint: "Plans et offre en préparation" },
+  OFFER_SENT: {
+    label: "Offre envoyée",
+    step: "Offre",
+    tone: "bg-status-reserved/15 text-status-reserved-strong ring-status-reserved/35",
+    hint: "En attente de la réponse du client",
+  },
+  SIGNED: { label: "Offre acceptée", step: "Accord", tone: "bg-primary/10 text-primary ring-primary/25", hint: "Chantier à démarrer" },
+  IN_PROGRESS: { label: "Chantier en cours", step: "Chantier", tone: "bg-gold/20 text-gold-strong ring-gold/40", hint: "Travaux en cours" },
+  SUSPENDED: { label: "Chantier suspendu", step: "Suspendu", tone: "bg-status-sold/12 text-status-sold-strong ring-status-sold/30", hint: "Travaux à l'arrêt" },
+  DELIVERED: {
+    label: "Maison livrée",
+    step: "Livraison",
+    tone: "bg-status-available/12 text-status-available-strong ring-status-available/30",
+    hint: "Chantier terminé",
+  },
+  CANCELLED: { label: "Sans suite", step: "Sans suite", tone: "bg-muted text-muted-foreground ring-border", hint: "Projet abandonné" },
+}
+
+/** Déroulé normal d'un projet (hors suspension et abandon). */
+export const CONSTRUCTION_FLOW: ConstructionStatus[] = ["REQUESTED", "STUDY", "OFFER_SENT", "SIGNED", "IN_PROGRESS", "DELIVERED"]
+
+export const LAND_ORIGIN: Record<LandOrigin, { label: string; short: string; hint: string }> = {
+  COMPANY_LOT: { label: "Terrain du lotissement", short: "Lotissement", hint: "Le client construit sur un terrain acheté chez nous" },
+  OWN_LAND: { label: "Terrain du client", short: "Terrain du client", hint: "Le client possède déjà un terrain ailleurs" },
+  NO_LAND: { label: "Sans terrain pour l'instant", short: "Sans terrain", hint: "Maison souhaitée, terrain à trouver" },
+}
+
+export const QUOTE_STATUS: Record<QuoteStatus, { label: string; tone: string }> = {
+  DRAFT: { label: "Brouillon", tone: "bg-muted text-muted-foreground ring-border" },
+  SENT: { label: "Envoyée au client", tone: "bg-status-reserved/15 text-status-reserved-strong ring-status-reserved/35" },
+  ACCEPTED: { label: "Acceptée", tone: "bg-status-available/12 text-status-available-strong ring-status-available/30" },
+  DECLINED: { label: "Refusée", tone: "bg-status-sold/12 text-status-sold-strong ring-status-sold/30" },
+}
+
+export const EXPENSE_SCOPE: Record<ExpenseScope, { label: string; hint: string }> = {
+  SITE: { label: "Lotissement", hint: "Viabilisation, voirie, frais du site" },
+  PROJECT: { label: "Chantier d'un client", hint: "Dépense rattachée à un projet de construction" },
+}
+
+export const EXPENSE_CATEGORY: Record<ExpenseCategory, { label: string; color: string }> = {
+  MATERIALS: { label: "Matériaux", color: "var(--chart-1)" },
+  LABOR: { label: "Main-d'œuvre", color: "var(--chart-2)" },
+  EQUIPMENT: { label: "Matériel et engins", color: "var(--chart-4)" },
+  TRANSPORT: { label: "Transport", color: "var(--chart-3)" },
+  SUBCONTRACTING: { label: "Sous-traitance", color: "var(--chart-5)" },
+  STUDIES: { label: "Études et plans", color: "var(--status-reserved)" },
+  PERMITS: { label: "Permis et taxes", color: "var(--status-sold)" },
+  UTILITIES: { label: "Eau, électricité, raccordements", color: "var(--status-available)" },
+  OTHER: { label: "Autre", color: "var(--status-unavailable)" },
+}
+
+export const EXPENSE_CATEGORY_ORDER: ExpenseCategory[] = [
+  "MATERIALS",
+  "LABOR",
+  "EQUIPMENT",
+  "TRANSPORT",
+  "SUBCONTRACTING",
+  "STUDIES",
+  "PERMITS",
+  "UTILITIES",
+  "OTHER",
+]

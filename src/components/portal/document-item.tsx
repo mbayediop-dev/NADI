@@ -21,9 +21,12 @@ function fileVisual(mime: string) {
 export function DocumentItem({
   doc,
   subtitle,
+  compact = false,
 }: {
   doc: { id: string; title: string; description: string | null; category: DocumentCategory; mimeType: string; size: number; createdAt: Date }
   subtitle?: string
+  /** Colonne étroite : un seul bouton (téléchargement), sans libellé */
+  compact?: boolean
 }) {
   const visual = fileVisual(doc.mimeType)
   const href = `/api/documents/${doc.id}`
@@ -47,7 +50,10 @@ export function DocumentItem({
           href={href}
           target="_blank"
           rel="noreferrer"
-          className="hidden h-9 items-center gap-1.5 rounded-xl px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:inline-flex"
+          className={cn(
+            "hidden h-9 items-center gap-1.5 rounded-xl px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+            !compact && "sm:inline-flex",
+          )}
         >
           <Eye className="size-4" />
           Ouvrir
@@ -58,7 +64,7 @@ export function DocumentItem({
           className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-primary/10 px-3 text-sm font-semibold text-primary transition-colors hover:bg-primary/15"
         >
           <Download className="size-4" />
-          <span className="hidden sm:inline">Télécharger</span>
+          <span className={cn("hidden", !compact && "sm:inline")}>Télécharger</span>
         </a>
       </div>
     </li>

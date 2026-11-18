@@ -30,7 +30,7 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
         <Sidebar collapsible="icon" className="border-sidebar-border">
           <SidebarHeader className="px-3 pt-4 pb-2">
             <Link href="/admin" className="flex items-center rounded-lg p-1 group-data-[collapsible=icon]:p-0">
-              <Logo tone="light" mark className="group-data-[collapsible=icon]:[&>span:last-child]:hidden" />
+              <Logo tone="light" className="group-data-[collapsible=icon]:[&>span:last-child]:hidden" />
             </Link>
           </SidebarHeader>
           <SidebarContent className="scrollbar-none">

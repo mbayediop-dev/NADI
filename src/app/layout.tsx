@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/brand"
 import type { Metadata, Viewport } from "next"
 import { Manrope, Source_Serif_4 } from "next/font/google"
 import { Toaster } from "@/components/ui/sonner"
@@ -20,19 +21,19 @@ const serif = Source_Serif_4({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),
   title: {
-    default: "NADI Group — Terrains viabilisés",
-    template: "%s · NADI Group",
+    default: `${BRAND.name} — Terrains viabilisés`,
+    template: `%s · ${BRAND.name}`,
   },
   description:
-    "Choisissez votre terrain viabilisé sur le site NADI Group : plan interactif, prix, modalités de paiement échelonné et suivi de l'avancement des travaux.",
-  applicationName: "NADI Group",
-  openGraph: { type: "website", locale: "fr_FR", siteName: "NADI Group" },
+    `Choisissez votre terrain viabilisé sur le site ${BRAND.name} : plan interactif, prix, modalités de paiement échelonné et suivi de l'avancement des travaux.`,
+  applicationName: BRAND.name,
+  openGraph: { type: "website", locale: "fr_FR", siteName: BRAND.name },
 }
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#faf9f5" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f1a18" },
+    { media: "(prefers-color-scheme: light)", color: "#f9fafc" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a1018" },
   ],
 }
 

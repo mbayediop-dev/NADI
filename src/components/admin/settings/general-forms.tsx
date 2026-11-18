@@ -42,10 +42,10 @@ export type CompanyValues = {
 }
 
 const SOCIALS = [
-  { key: "socialFacebook", label: "Facebook", placeholder: "https://www.facebook.com/nadigroup" },
-  { key: "socialInstagram", label: "Instagram", placeholder: "https://www.instagram.com/nadigroup" },
-  { key: "socialLinkedin", label: "LinkedIn", placeholder: "https://www.linkedin.com/company/nadigroup" },
-  { key: "socialYoutube", label: "YouTube", placeholder: "https://www.youtube.com/@nadigroup" },
+  { key: "socialFacebook", label: "Facebook", placeholder: "https://www.facebook.com/futuriagroup" },
+  { key: "socialInstagram", label: "Instagram", placeholder: "https://www.instagram.com/futuriagroup" },
+  { key: "socialLinkedin", label: "LinkedIn", placeholder: "https://www.linkedin.com/company/futuriagroup" },
+  { key: "socialYoutube", label: "YouTube", placeholder: "https://www.youtube.com/@futuriagroup" },
 ] as const
 
 export function CompanyForm({ initial, canEdit }: { initial: CompanyValues; canEdit: boolean }) {
@@ -71,7 +71,7 @@ export function CompanyForm({ initial, canEdit }: { initial: CompanyValues; canE
             <FormField label="Signature / slogan" htmlFor="c-tagline" hint="Affiché dans le pied de page du site.">
               <Input id="c-tagline" className="h-9" value={v.companyTagline} onChange={(e) => form.set("companyTagline", e.target.value)} />
             </FormField>
-            <FormField label="Logo (optionnel)" htmlFor="c-logo" className="sm:col-span-2" hint="Format carré conseillé. Par défaut, le monogramme NADI est utilisé.">
+            <FormField label="Logo (optionnel)" htmlFor="c-logo" className="sm:col-span-2" hint="Format carré conseillé. Par défaut, le logo FUTURIA GROUP est utilisé.">
               <div className="max-w-40">
                 <ImageField value={v.logoUrl} onChange={(url) => form.set("logoUrl", url)} folder="branding" aspect="aspect-square" />
               </div>

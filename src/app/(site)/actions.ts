@@ -5,6 +5,7 @@ import { z } from "zod"
 import { db } from "@/lib/db"
 import { env } from "@/lib/env"
 import { fail, ok, run, type ActionResult } from "@/lib/action"
+import { createConstructionProject } from "@/lib/construction-service"
 import { logActivity } from "@/lib/activity"
 import { normalizePhone } from "@/lib/phone"
 import { getSettings } from "@/lib/settings"
@@ -119,5 +120,93 @@ export async function createReservationRequest(input: ReservationInput): Promise
     }
 
     return ok({ lotNumber: lot?.number ?? null })
+  })
+}
+
+// ─────────────────────────────────────────────────────────────
+// Demande de construction déposée depuis le site public
+// ─────────────────────────────────────────────────────────────
+
+const constructionSchema = z.object({
+  landOrigin: z.enum(["COMPANY_LOT", "OWN_LAND", "NO_LAND"]),
+  fullName: z.string().trim().min(2, "Indiquez votre nom complet").max(120),
+  phone: z.string().trim().min(6, "Indiquez votre numéro de téléphone").max(30),
+  email: z
+    .string()
+    .trim()
+    .max(160)
+    .optional()
+    .nullable()
+    .refine((v) => !v || z.email().safeParse(v).success, "Adresse e-mail invalide"),
+  landAddress: z.string().trim().max(200).optional().nullable(),
+  landAreaM2: z.number().finite().positive().max(1_000_000).optional().nullable(),
+  houseModelId: z.string().trim().min(1).optional().nullable(),
+  message: z.string().trim().max(3000).optional().nullable(),
+  budget: z.number().finite().nonnegative().optional().nullable(),
+  /** Champ piège anti-robots : doit rester vide */
+  website: z.string().optional().nullable(),
+})
+
+export type ConstructionRequestInput = z.input<typeof constructionSchema>
+
+/**
+ * Demande d'étude pour faire construire une maison (avec ou sans terrain).
+ * La demande n'est jamais rattachée d'office à un client existant : n'importe qui peut saisir le téléphone d'un autre,
+ * et la réponse ne doit pas révéler si un numéro correspond à un client. Le rattachement se fait dans l'administration.
+ */
+export async function createConstructionRequest(input: ConstructionRequestInput): Promise<ActionResult<null>> {
+  return run(async () => {
+    const data = constructionSchema.parse(input)
+    if (data.website) return ok(null) // robot : on ignore silencieusement
+
+    const phone = normalizePhone(data.phone, env.defaultCountry)
+    if (!phone) return fail("Numéro de téléphone invalide. Vérifiez l'indicatif et le numéro.", { phone: "Numéro invalide" })
+
+    const h = await headers()
+    const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || null
+    if ((ip && rateLimited(`ip:${ip}`, MAX_PER_IP)) || rateLimited(`build:${phone}`, MAX_PER_PHONE)) {
+      return fail("Vous avez déjà envoyé plusieurs demandes. Merci de patienter quelques minutes : nous vous rappelons très vite.")
+    }
+
+    const model = data.houseModelId ? await db.houseModel.findFirst({ where: { id: data.houseModelId, published: true }, select: { id: true, name: true } }) : null
+
+    // Évite les doublons : même téléphone, même modèle, demande encore à l'étude de moins de 24 h
+    const since = new Date(Date.now() - 24 * 3600 * 1000)
+    const duplicate = await db.constructionProject.findFirst({
+      where: { contactPhone: phone, status: "REQUESTED", source: "SITE", houseModelId: model?.id ?? null, createdAt: { gte: since } },
+      select: { id: true },
+    })
+    if (duplicate) return ok(null)
+
+    const project = await createConstructionProject({
+      title: model ? model.name : "Maison sur mesure",
+      status: "REQUESTED",
+      source: "SITE",
+      buyerId: null,
+      contactName: data.fullName,
+      contactPhone: phone,
+      contactEmail: data.email || null,
+      landOrigin: data.landOrigin,
+      lotId: null,
+      landAddress: data.landOrigin === "OWN_LAND" ? data.landAddress || null : null,
+      landAreaM2: data.landOrigin === "OWN_LAND" ? (data.landAreaM2 ?? null) : null,
+      landReference: null,
+      houseModelId: model?.id ?? null,
+      customPlan: !model,
+      requirements: data.message || null,
+      budget: data.budget ?? null,
+    })
+
+    await logActivity({
+      type: "construction",
+      message: `Nouvelle demande de construction de ${data.fullName} depuis le site${model ? ` (modèle ${model.name})` : ""}`,
+      entityType: "construction",
+      entityId: project.id,
+    })
+    const settings = await getSettings()
+    if (settings.alertPhone) {
+      await sendSms(settings.alertPhone, `${settings.companyName} : demande de construction — ${data.fullName} (${phone}). ${env.appUrl}/admin/construction/${project.id}`, "ALERT")
+    }
+    return ok(null)
   })
 }

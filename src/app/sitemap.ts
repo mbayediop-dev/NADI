@@ -9,6 +9,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     { url: `${base}/`, changeFrequency: "daily", priority: 1 },
     { url: `${base}/terrains`, changeFrequency: "daily", priority: 0.9 },
+    { url: `${base}/construction`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${base}/avancement`, changeFrequency: "weekly", priority: 0.7 },
     ...lots.map((lot) => ({
       url: `${base}/terrains/${encodeURIComponent(lot.number)}`,

@@ -1,5 +1,6 @@
 "use client"
 
+import { BRAND } from "@/lib/brand"
 import Link from "next/link"
 import { ChevronDown, ExternalLink, LogOut, UserRound } from "lucide-react"
 import { logoutClient } from "@/app/espace-client/actions"
@@ -40,7 +41,7 @@ export function OwnerMenu({ name, phone }: { name: string; phone: string }) {
         <DropdownMenuItem asChild>
           <Link href="/" target="_blank">
             <ExternalLink />
-            Site NADI Group
+            Site {BRAND.name}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />

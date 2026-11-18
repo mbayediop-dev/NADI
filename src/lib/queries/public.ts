@@ -238,7 +238,7 @@ export type PublicDocument = { id: string; title: string; description: string | 
 export const getPublicDocuments = cache(async (): Promise<PublicDocument[]> => {
   await connection()
   const docs = await db.document.findMany({
-    where: { visibility: "PUBLIC", saleId: null },
+    where: { visibility: "PUBLIC", saleId: null, constructionProjectId: null },
     orderBy: { createdAt: "asc" },
     select: { id: true, title: true, description: true, category: true, size: true, mimeType: true },
   })

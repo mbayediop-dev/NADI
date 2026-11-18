@@ -1,6 +1,6 @@
-# NADI Group — Gestion de lotissement
+# FUTURIA GROUP — Gestion de lotissement
 
-Application web responsive (ordinateur, tablette, mobile) pour commercialiser et gérer le site de 4 hectares de NADI Group.
+Application web responsive (ordinateur, tablette, mobile) pour commercialiser et gérer le site de 4 hectares de FUTURIA GROUP (le dépôt et les identifiants techniques gardent le nom d'origine « NADI »).
 
 - **Site public** : accueil (`/`) avec présentation du domaine, plan, terrains mis en avant, processus d'achat, avancement et contact ; page **Nos terrains** (`/terrains`) avec le plan interactif complet, les filtres, la fiche de chaque lot (surface, prix, sol, position, acompte, nombre et périodicité des versements), la réservation, les documents et la FAQ ; mentions légales et confidentialité.
 - **Espace client** (`/espace-client`) : connexion par numéro de téléphone + code reçu par SMS (réservée aux propriétaires enregistrés), suivi du terrain, échéancier, versements et reçus, documents, photos et vidéos du chantier.

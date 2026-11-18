@@ -14,7 +14,7 @@ const COMMITMENTS = [
   "Un accompagnement personnalisé",
 ]
 
-/** « Pourquoi choisir NADI Group ? » : photo (ou vidéo) + engagements. */
+/** « Pourquoi choisir FUTURIA GROUP ? » : photo (ou vidéo) + engagements. */
 export function AboutSection({
   companyName,
   about,

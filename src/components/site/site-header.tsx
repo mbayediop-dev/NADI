@@ -1,5 +1,6 @@
 "use client"
 
+import { BRAND } from "@/lib/brand"
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -37,6 +38,7 @@ export function SiteHeader({ phone }: { phone: string | null }) {
   let active = "accueil"
   if (pathname.startsWith("/terrains")) active = "terrains"
   else if (pathname.startsWith("/avancement")) active = "avancement"
+  else if (pathname.startsWith("/construction")) active = "construction"
   else if (pathname === "/" && section) active = section
   else if (pathname !== "/") active = ""
 
@@ -61,12 +63,12 @@ export function SiteHeaderBar({ active, phone }: { active: string | null; phone:
         scrolled && "shadow-[0_10px_30px_-18px_rgb(0_0_0/0.35)]",
       )}
     >
-      <div className="mx-auto flex h-16 w-full max-w-7xl items-center gap-8 px-4 sm:px-6 lg:h-[76px] lg:gap-12 lg:px-8">
-        <Link href="/" aria-label="NADI Group — accueil" className="shrink-0">
+      <div className="mx-auto flex h-16 w-full max-w-7xl items-center gap-8 px-4 sm:px-6 lg:h-[76px] lg:px-8 xl:gap-10">
+        <Link href="/" aria-label={`${BRAND.name} — accueil`} className="shrink-0">
           <Logo />
         </Link>
 
-        <nav aria-label="Navigation principale" className="hidden flex-1 items-center gap-0.5 lg:flex">
+        <nav aria-label="Navigation principale" className="hidden flex-1 items-center xl:flex">
           {SITE_NAV.map((item) => {
             const isActive = item.id === active
             return (
@@ -75,14 +77,14 @@ export function SiteHeaderBar({ active, phone }: { active: string | null; phone:
                 href={item.href}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
-                  "relative px-3 py-2 text-[0.9rem] font-medium transition-colors",
+                  "relative px-2.5 py-2 text-[0.9rem] font-medium whitespace-nowrap transition-colors",
                   isActive ? "text-pine-deep" : "text-foreground/65 hover:text-foreground",
                 )}
               >
                 {item.label}
                 <span
                   className={cn(
-                    "absolute inset-x-3 -bottom-0.5 h-0.5 origin-left rounded-full bg-pine-deep transition-transform duration-300",
+                    "absolute inset-x-2.5 -bottom-0.5 h-0.5 origin-left rounded-full bg-pine-deep transition-transform duration-300",
                     isActive ? "scale-x-100" : "scale-x-0",
                   )}
                 />
@@ -116,7 +118,7 @@ export function SiteHeaderBar({ active, phone }: { active: string | null; phone:
 
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon-lg" className="text-pine-deep hover:bg-sand lg:hidden" aria-label="Ouvrir le menu">
+              <Button variant="ghost" size="icon-lg" className="text-pine-deep hover:bg-sand xl:hidden" aria-label="Ouvrir le menu">
                 <Menu className="size-6" />
               </Button>
             </SheetTrigger>

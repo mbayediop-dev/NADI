@@ -12,7 +12,7 @@ type Row = { y0: number; y1: number; facing: string; frontage: "avenue" | "road"
 export const ROADS = {
   horizontal: [
     { name: "RUE 1", y0: 0, y1: 10 },
-    { name: "AVENUE NADI", y0: 50, y1: 64, main: true },
+    { name: "AVENUE FUTURIA", y0: 50, y1: 64, main: true },
     { name: "RUE 2", y0: 104, y1: 114 },
   ],
   vertical: [
@@ -24,8 +24,8 @@ export const ROADS = {
 
 const ROWS: Record<string, Row> = {
   An: { y0: 10, y1: 30, facing: "Rue 1", frontage: "road" },
-  As: { y0: 30, y1: 50, facing: "Avenue NADI", frontage: "avenue" },
-  Bn: { y0: 64, y1: 84, facing: "Avenue NADI", frontage: "avenue" },
+  As: { y0: 30, y1: 50, facing: "Avenue FUTURIA", frontage: "avenue" },
+  Bn: { y0: 64, y1: 84, facing: "Avenue FUTURIA", frontage: "avenue" },
   Bs: { y0: 84, y1: 104, facing: "Rue 2", frontage: "road" },
   Cn: { y0: 114, y1: 134, facing: "Rue 2", frontage: "road" },
   Cs: { y0: 134, y1: 154, facing: "la route nationale", frontage: "highway" },

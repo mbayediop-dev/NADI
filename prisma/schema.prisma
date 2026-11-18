@@ -32,8 +32,10 @@ model AdminUser {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  payments   Payment[]
-  activities Activity[]
+  payments             Payment[]
+  activities           Activity[]
+  constructionPayments ConstructionPayment[]
+  expenses             Expense[]
 }
 
 // Paramètres globaux (ligne unique, id = 1)
@@ -52,15 +54,15 @@ model Settings {
   signatureKey    String? // cachet + signature des reçus : clé du stockage privé, servie par /api/signature
 
   // Site / lotissement
-  siteName        String  @default("Cité NADI")
-  siteLocation    String  @default("")
-  siteDescription String  @default("")
-  siteAreaM2      Float   @default(40000)
+  siteName        String @default("Cité NADI")
+  siteLocation    String @default("")
+  siteDescription String @default("")
+  siteAreaM2      Float  @default(40000)
   siteLatitude    Float?
   siteLongitude   Float?
-  amenities       Json    @default("[]") // string[]
-  highlights      Json    @default("[]") // { title, text }[]
-  faq             Json    @default("[]") // { q, a }[]
+  amenities       Json   @default("[]") // string[]
+  highlights      Json   @default("[]") // { title, text }[]
+  faq             Json   @default("[]") // { q, a }[]
 
   // Page d'accueil
   heroEyebrow     String  @default("")
@@ -85,18 +87,18 @@ model Settings {
   planHeight   Int     @default(1000)
 
   // Commercial
-  currencyLabel        String           @default("FCFA")
-  showPricesPublicly   Boolean          @default(true)
-  defaultDepositRate   Float            @default(30) // % du prix
-  defaultInstallments  Int              @default(12)
-  defaultFrequency     PaymentFrequency @default(MONTHLY)
-  reservationsOpen     Boolean          @default(true)
+  currencyLabel       String           @default("FCFA")
+  showPricesPublicly  Boolean          @default(true)
+  defaultDepositRate  Float            @default(30) // % du prix
+  defaultInstallments Int              @default(12)
+  defaultFrequency    PaymentFrequency @default(MONTHLY)
+  reservationsOpen    Boolean          @default(true)
 
   // Notifications SMS
-  alertPhone             String? // reçoit une alerte à chaque nouvelle demande
-  smsOnPayment           Boolean @default(true)
-  smsReminderDaysBefore  Int     @default(3)
-  smsOverdueReminders    Boolean @default(true)
+  alertPhone            String? // reçoit une alerte à chaque nouvelle demande
+  smsOnPayment          Boolean @default(true)
+  smsReminderDaysBefore Int     @default(3)
+  smsOverdueReminders   Boolean @default(true)
 
   updatedAt DateTime @updatedAt
 }
@@ -176,9 +178,10 @@ model Lot {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  sales            Sale[]
-  requests         ReservationRequest[] @relation("RequestedLot")
-  proposedRequests ReservationRequest[] @relation("ProposedLot")
+  sales                Sale[]
+  requests             ReservationRequest[]  @relation("RequestedLot")
+  proposedRequests     ReservationRequest[]  @relation("ProposedLot")
+  constructionProjects ConstructionProject[]
 
   @@index([status])
 }
@@ -206,8 +209,9 @@ model Buyer {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  sales    Sale[]
-  requests ReservationRequest[]
+  sales                Sale[]
+  requests             ReservationRequest[]
+  constructionProjects ConstructionProject[]
 }
 
 enum SaleStatus {
@@ -258,8 +262,8 @@ model Installment {
   dueDate DateTime
   amount  Float
 
-  sale             Sale      @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  lastReminderAt   DateTime?
+  sale           Sale      @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  lastReminderAt DateTime?
 
   @@unique([saleId, index])
   @@index([dueDate])
@@ -407,24 +411,32 @@ enum DocumentCategory {
   RECEIPT
   TECHNICAL
   OTHER
+  PERMIT // permis de construire, autorisations
+  QUOTE // offre, devis
+  INVOICE // facture
 }
 
 model Document {
-  id          String           @id @default(cuid())
-  title       String
-  description String?
-  category    DocumentCategory @default(OTHER)
-  visibility  Visibility       @default(CLIENTS)
-  saleId      String? // document propre à une vente (visible par l'acheteur concerné)
-  storageKey  String
-  filename    String
-  mimeType    String
-  size        Int
-  createdAt   DateTime         @default(now())
+  id                    String           @id @default(cuid())
+  title                 String
+  description           String?
+  category              DocumentCategory @default(OTHER)
+  visibility            Visibility       @default(CLIENTS)
+  saleId                String? // document propre à une vente (visible par l'acheteur concerné)
+  // Document d'un projet de construction : visible par son client (CLIENTS) ou interne (PRIVATE)
+  constructionProjectId String?
+  fromClient            Boolean          @default(false) // déposé par le client depuis son espace
+  storageKey            String
+  filename              String
+  mimeType              String
+  size                  Int
+  createdAt             DateTime         @default(now())
 
-  sale Sale? @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  sale                Sale?                @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  constructionProject ConstructionProject? @relation(fields: [constructionProjectId], references: [id], onDelete: Cascade)
 
   @@index([saleId])
+  @@index([constructionProjectId])
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -469,4 +481,277 @@ model Activity {
   actor AdminUser? @relation(fields: [actorId], references: [id], onDelete: SetNull)
 
   @@index([createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Construction : maisons bâties par l'entreprise pour ses clients
+// (sur un terrain du lotissement, sur le terrain du client, ou sans terrain au départ)
+// ─────────────────────────────────────────────────────────────
+
+enum LandOrigin {
+  COMPANY_LOT // terrain du lotissement
+  OWN_LAND // terrain du client, situé ailleurs
+  NO_LAND // pas encore de terrain
+}
+
+enum ConstructionStatus {
+  REQUESTED // demande reçue, à étudier
+  STUDY // étude : plans et offre en préparation
+  OFFER_SENT // offre transmise au client
+  SIGNED // offre acceptée, chantier à démarrer
+  IN_PROGRESS // chantier en cours
+  SUSPENDED // chantier suspendu
+  DELIVERED // maison livrée
+  CANCELLED // sans suite
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  DECLINED
+}
+
+enum ExpenseScope {
+  SITE // lotissement : viabilisation, voirie, frais du site
+  PROJECT // chantier d'un client
+}
+
+enum ExpenseCategory {
+  MATERIALS // matériaux : ciment, fer, agglos, sable…
+  LABOR // main-d'œuvre
+  EQUIPMENT // matériel, outillage, location d'engins
+  TRANSPORT
+  SUBCONTRACTING // sous-traitance
+  STUDIES // études, plans, géomètre
+  PERMITS // permis, taxes, frais administratifs
+  UTILITIES // eau, électricité, raccordements
+  OTHER
+}
+
+// Catalogue des plans proposés aux clients
+model HouseModel {
+  id           String   @id @default(cuid())
+  name         String
+  tagline      String   @default("")
+  description  String   @default("")
+  levels       String? // « Plain-pied », « R+1 »…
+  bedrooms     Int?
+  bathrooms    Int?
+  livingAreaM2 Float?
+  minLandM2    Float?
+  basePrice    Float? // prix indicatif « à partir de »
+  images       Json     @default("[]") // string[]
+  features     String[]
+  published    Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  projects ConstructionProject[]
+}
+
+model ConstructionProject {
+  id        String             @id @default(cuid())
+  reference String             @unique
+  title     String
+  status    ConstructionStatus @default(REQUESTED)
+  source    String             @default("ADMIN") // ADMIN | SITE | PORTAL
+
+  // Client : rattaché à un acheteur pour l'accès à l'espace client ; les coordonnées saisies sont conservées
+  buyerId      String?
+  contactName  String
+  contactPhone String
+  contactEmail String?
+
+  // Terrain
+  landOrigin    LandOrigin
+  lotId         String?
+  landAddress   String?
+  landAreaM2    Float?
+  landReference String? // titre foncier, bail, NICAD…
+
+  // Maison
+  houseModelId String?
+  customPlan   Boolean @default(false)
+  requirements String? // besoins exprimés par le client
+  budget       Float? // budget indiqué par le client
+
+  // Contrat et calendrier
+  contractAmount Float? // montant convenu (offre acceptée)
+  startDate      DateTime?
+  plannedEndDate DateTime?
+  deliveredAt    DateTime?
+
+  showExpensesToClient Boolean   @default(true)
+  notes                String?
+  cancelledAt          DateTime?
+  cancelReason         String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  buyer        Buyer?                    @relation(fields: [buyerId], references: [id], onDelete: SetNull)
+  lot          Lot?                      @relation(fields: [lotId], references: [id], onDelete: SetNull)
+  houseModel   HouseModel?               @relation(fields: [houseModelId], references: [id], onDelete: SetNull)
+  quotes       ConstructionQuote[]
+  phases       ConstructionPhase[]
+  installments ConstructionInstallment[]
+  payments     ConstructionPayment[]
+  expenses     Expense[]
+  updates      ConstructionUpdate[]
+  documents    Document[]
+
+  @@index([status])
+  @@index([buyerId])
+  @@index([lotId])
+}
+
+// Offre de construction (devis détaillé), versionnable
+model ConstructionQuote {
+  id          String      @id @default(cuid())
+  projectId   String
+  number      String      @unique
+  title       String
+  status      QuoteStatus @default(DRAFT)
+  items       Json        @default("[]") // { section, label, quantity, unit, unitPrice }[]
+  amount      Float       @default(0)
+  notes       String?
+  validUntil  DateTime?
+  sentAt      DateTime?
+  respondedAt DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  project ConstructionProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+// Étapes du chantier ; l'avancement global est la moyenne pondérée par « weight »
+model ConstructionPhase {
+  id          String          @id @default(cuid())
+  projectId   String
+  title       String
+  description String?
+  status      MilestoneStatus @default(PLANNED)
+  progress    Int             @default(0)
+  weight      Int             @default(1)
+  startDate   DateTime?
+  endDate     DateTime?
+  sortOrder   Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  project  ConstructionProject  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  expenses Expense[]
+  updates  ConstructionUpdate[]
+
+  @@index([projectId])
+}
+
+// Appels de fonds (échéancier de paiement de la construction)
+model ConstructionInstallment {
+  id        String   @id @default(cuid())
+  projectId String
+  index     Int
+  label     String
+  dueDate   DateTime
+  amount    Float
+
+  project ConstructionProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, index])
+  @@index([dueDate])
+}
+
+// Versements du client pour sa construction
+model ConstructionPayment {
+  id            String        @id @default(cuid())
+  projectId     String
+  amount        Float
+  paidAt        DateTime
+  method        PaymentMethod @default(CASH)
+  reference     String?
+  note          String?
+  receiptNumber String        @unique
+  recordedById  String?
+  createdAt     DateTime      @default(now())
+
+  project    ConstructionProject @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  recordedBy AdminUser?          @relation(fields: [recordedById], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([paidAt])
+}
+
+// Dépenses : du lotissement (SITE) ou du chantier d'un client (PROJECT)
+model Expense {
+  id        String          @id @default(cuid())
+  scope     ExpenseScope
+  projectId String?
+  phaseId   String?
+  category  ExpenseCategory @default(MATERIALS)
+  label     String
+  supplier  String?
+  quantity  Float?
+  unit      String?
+  unitPrice Float?
+  amount    Float
+  spentAt   DateTime
+  method    PaymentMethod?
+  reference String? // n° de facture, de bon…
+  note      String?
+
+  // Justificatif (facture, reçu) : fichier privé servi par /api/construction/expenses/[id]
+  attachmentKey  String?
+  attachmentName String?
+  attachmentMime String?
+
+  visibleToClient Boolean  @default(true)
+  recordedById    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  project    ConstructionProject? @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  phase      ConstructionPhase?   @relation(fields: [phaseId], references: [id], onDelete: SetNull)
+  recordedBy AdminUser?           @relation(fields: [recordedById], references: [id], onDelete: SetNull)
+
+  @@index([scope])
+  @@index([projectId])
+  @@index([spentAt])
+}
+
+// Journal de chantier d'un projet (texte + photos / vidéos privées)
+model ConstructionUpdate {
+  id              String   @id @default(cuid())
+  projectId       String
+  phaseId         String?
+  title           String
+  body            String   @default("")
+  visibleToClient Boolean  @default(true)
+  publishedAt     DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  project ConstructionProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  phase   ConstructionPhase?  @relation(fields: [phaseId], references: [id], onDelete: SetNull)
+  media   ConstructionMedia[]
+
+  @@index([projectId, publishedAt])
+}
+
+model ConstructionMedia {
+  id         String    @id @default(cuid())
+  updateId   String
+  type       MediaType
+  storageKey String
+  mimeType   String
+  size       Int
+  caption    String?
+  sortOrder  Int       @default(0)
+  createdAt  DateTime  @default(now())
+
+  update ConstructionUpdate @relation(fields: [updateId], references: [id], onDelete: Cascade)
+
+  @@index([updateId])
 }

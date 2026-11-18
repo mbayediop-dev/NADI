@@ -2,12 +2,13 @@ import "server-only"
 import { db } from "@/lib/db"
 import type { NavCounts } from "@/components/admin/nav-config"
 
-/** Compteurs affichés dans la navigation : nouvelles demandes et ventes en retard. */
+/** Compteurs affichés dans la navigation : nouvelles demandes, ventes en retard, demandes de construction à étudier. */
 export async function getNavCounts(): Promise<NavCounts> {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  const [newRequests, sales] = await Promise.all([
+  const [newRequests, newConstruction, sales] = await Promise.all([
     db.reservationRequest.count({ where: { status: "NEW" } }),
+    db.constructionProject.count({ where: { status: "REQUESTED" } }),
     db.sale.findMany({
       where: { status: "ACTIVE" },
       select: {
@@ -21,5 +22,5 @@ export async function getNavCounts(): Promise<NavCounts> {
     const paid = s.payments.reduce((sum, p) => sum + p.amount, 0)
     return due - paid > 0.5
   }).length
-  return { newRequests, lateSales }
+  return { newRequests, lateSales, newConstruction }
 }

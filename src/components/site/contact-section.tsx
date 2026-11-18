@@ -3,6 +3,7 @@ import { formatPhone } from "@/lib/phone"
 import { Container, Eyebrow } from "@/components/site/section-heading"
 import { ContactDialog } from "@/components/site/contact-dialog"
 import { Reveal } from "@/components/site/reveal"
+import { LOGO } from "@/components/brand/logo-paths"
 
 export function ContactSection({
   companyName,
@@ -30,7 +31,7 @@ export function ContactSection({
   return (
     <section id="contact" className="relative scroll-mt-20 overflow-hidden bg-pine-deep text-white">
       <div aria-hidden className="bg-grain pointer-events-none absolute inset-0 opacity-50" />
-      <LeafDecor className="pointer-events-none absolute -bottom-16 -left-12 h-[300px] w-auto text-white/[0.08] sm:h-[380px]" />
+      <BrandDecor className="pointer-events-none absolute -bottom-24 -left-16 h-[300px] w-auto text-white/[0.05] sm:h-[380px]" />
       <Container className="relative grid gap-12 py-16 sm:py-20 lg:grid-cols-[1.15fr_1fr] lg:items-center lg:gap-20">
         <Reveal>
           <Eyebrow tone="light">Un projet&nbsp;? Une question&nbsp;?</Eyebrow>
@@ -78,13 +79,12 @@ export function ContactSection({
 }
 
 /** Feuillage décoratif (coin inférieur gauche du bandeau contact). */
-function LeafDecor({ className }: { className?: string }) {
+/** Filigrane du bandeau : le symbole F du logo, ton sur ton. */
+function BrandDecor({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 320 320" className={className} fill="currentColor" aria-hidden="true">
-      <path d="M40 300C40 180 120 90 250 60c-10 130-90 220-210 240z" />
-      <path d="M60 300c0-60 40-120 110-150-20 70-60 120-110 150z" opacity=".7" />
-      <path d="M0 230c50-30 110-30 160-10-50 40-110 50-160 10z" opacity=".6" />
-      <path d="M10 320c20-50 60-90 120-110-30 50-70 90-120 110z" opacity=".5" />
+    <svg viewBox={LOGO.mark.viewBox} className={className} fill="currentColor" aria-hidden="true">
+      <path d={LOGO.mark.stem} />
+      <path d={LOGO.mark.bar} />
     </svg>
   )
 }

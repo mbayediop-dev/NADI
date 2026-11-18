@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 
 export type CompanyContact = { company: string; phone: string; whatsapp: string; email: string }
 
-/** Boutons de contact NADI Group (WhatsApp, appel, e-mail). */
+/** Boutons de contact FUTURIA GROUP (WhatsApp, appel, e-mail). */
 export function ContactButtons({
   contact,
   message,

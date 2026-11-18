@@ -1,10 +1,13 @@
 import {
   BadgeDollarSign,
+  Building2,
   FileText,
   HardHat,
+  House,
   Inbox,
   LayoutDashboard,
   Map,
+  ReceiptText,
   Settings,
   SquareStack,
   Users,
@@ -13,7 +16,7 @@ import {
 
 import type { LucideIcon } from "lucide-react"
 
-export type NavCounts = { newRequests: number; lateSales: number }
+export type NavCounts = { newRequests: number; lateSales: number; newConstruction: number }
 
 type NavItem = { href: string; label: string; icon: LucideIcon; exact?: boolean; badge?: keyof NavCounts }
 
@@ -33,6 +36,14 @@ export const ADMIN_NAV: { label: string; items: NavItem[] }[] = [
       { href: "/admin/acheteurs", label: "Acheteurs", icon: Users },
       { href: "/admin/ventes", label: "Ventes", icon: BadgeDollarSign, badge: "lateSales" },
       { href: "/admin/versements", label: "Versements", icon: Wallet },
+    ],
+  },
+  {
+    label: "Construction",
+    items: [
+      { href: "/admin/construction", label: "Projets", icon: Building2, badge: "newConstruction" },
+      { href: "/admin/depenses", label: "Dépenses", icon: ReceiptText },
+      { href: "/admin/modeles", label: "Modèles de maisons", icon: House },
     ],
   },
   {
@@ -60,6 +71,10 @@ export const ADMIN_TITLES: Record<string, string> = {
   avancement: "Avancement",
   documents: "Documents",
   parametres: "Paramètres",
+  construction: "Construction",
+  depenses: "Dépenses",
+  modeles: "Modèles de maisons",
+  recu: "Reçu",
   nouveau: "Nouveau",
   nouvelle: "Nouvelle",
   import: "Import",

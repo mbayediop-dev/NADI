@@ -20,7 +20,7 @@ export function ContactDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="h-12 rounded-md bg-gold px-6 text-[0.95rem] font-semibold text-gold-foreground shadow-[0_14px_30px_-14px_oklch(0.797_0.115_79/0.9)] hover:bg-gold/90">
+        <Button className="h-12 rounded-md bg-gold px-6 text-[0.95rem] font-semibold text-gold-foreground shadow-[0_14px_30px_-14px_oklch(0.684_0.184_44.4/0.9)] hover:bg-gold/90">
           Nous contacter
           <ArrowRight />
         </Button>

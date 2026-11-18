@@ -15,7 +15,8 @@ export const env = {
   appUrl: process.env.APP_URL ?? "http://localhost:3000",
   defaultCountry: (process.env.DEFAULT_COUNTRY ?? "SN").toUpperCase(),
   smsProvider: process.env.SMS_PROVIDER ?? "console",
-  smsSenderName: process.env.SMS_SENDER_NAME ?? "NADI Group",
+  /** Nom d'expéditeur des SMS : 11 caractères au plus chez la plupart des opérateurs. */
+  smsSenderName: process.env.SMS_SENDER_NAME ?? "FUTURIA",
   /** local | supabase | s3 */
   storageDriver: process.env.STORAGE_DRIVER ?? "local",
   storageLocalDir: process.env.STORAGE_LOCAL_DIR ?? "./storage",

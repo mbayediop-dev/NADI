@@ -2,18 +2,22 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { FileText, HardHat, Home, UserRound, Wallet } from "lucide-react"
+import { Building2, FileText, HardHat, Home, UserRound, Wallet } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-export const PORTAL_NAV = [
+type PortalNavItem = { href: string; label: string; longLabel?: string; icon: typeof Home; exact?: boolean; desktopOnly?: boolean }
+
+// Cinq entrées au plus dans la barre mobile : « Profil » y reste accessible par le menu du compte, en haut de l'écran.
+export const PORTAL_NAV: PortalNavItem[] = [
   { href: "/espace-client", label: "Accueil", icon: Home, exact: true },
   { href: "/espace-client/paiements", label: "Paiements", icon: Wallet },
   { href: "/espace-client/documents", label: "Documents", icon: FileText },
   { href: "/espace-client/avancement", label: "Chantier", longLabel: "Avancement", icon: HardHat },
-  { href: "/espace-client/profil", label: "Profil", icon: UserRound },
+  { href: "/espace-client/construction", label: "Maison", longLabel: "Construction", icon: Building2 },
+  { href: "/espace-client/profil", label: "Profil", icon: UserRound, desktopOnly: true },
 ]
 
-function isActive(pathname: string | null, item: (typeof PORTAL_NAV)[number]) {
+function isActive(pathname: string | null, item: PortalNavItem) {
   if (!pathname) return false
   if (item.exact) return pathname === item.href
   return pathname === item.href || pathname.startsWith(`${item.href}/`) || (item.href.endsWith("paiements") && pathname.startsWith("/espace-client/recus"))
@@ -52,7 +56,7 @@ export function MobileTabBarList({ pathname }: { pathname: string | null }) {
       className="no-print fixed inset-x-0 bottom-0 z-40 border-t bg-background/92 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
     >
       <ul className="mx-auto grid max-w-md grid-cols-5">
-        {PORTAL_NAV.map((item) => {
+        {PORTAL_NAV.filter((item) => !item.desktopOnly).map((item) => {
           const active = isActive(pathname, item)
           return (
             <li key={item.href}>

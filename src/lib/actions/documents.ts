@@ -11,9 +11,11 @@ import { logActivity } from "@/lib/activity"
 const documentSchema = z.object({
   title: z.string().trim().min(2, "Titre requis").max(160),
   description: z.string().trim().max(500).optional().nullable(),
-  category: z.enum(["PLAN", "ADMINISTRATIVE", "CONTRACT", "RECEIPT", "TECHNICAL", "OTHER"]),
+  category: z.enum(["PLAN", "ADMINISTRATIVE", "CONTRACT", "RECEIPT", "TECHNICAL", "OTHER", "PERMIT", "QUOTE", "INVOICE"]),
   visibility: z.enum(["PUBLIC", "CLIENTS", "PRIVATE"]),
   saleId: z.string().optional().nullable(),
+  /** Document d'un projet de construction : visible de son client (CLIENTS) ou interne (PRIVATE) */
+  constructionProjectId: z.string().optional().nullable(),
   file: z.object({
     key: z.string().startsWith("private/"),
     filename: z.string().min(1),
@@ -32,8 +34,9 @@ export async function createDocument(input: z.input<typeof documentSchema>): Pro
         title: data.title,
         description: data.description || null,
         category: data.category,
-        visibility: data.saleId ? "CLIENTS" : data.visibility,
+        visibility: data.saleId ? "CLIENTS" : data.constructionProjectId && data.visibility === "PUBLIC" ? "CLIENTS" : data.visibility,
         saleId: data.saleId || null,
+        constructionProjectId: data.constructionProjectId || null,
         storageKey: data.file.key,
         filename: data.file.filename,
         mimeType: data.file.mimeType,
@@ -43,11 +46,12 @@ export async function createDocument(input: z.input<typeof documentSchema>): Pro
     await logActivity({ type: "document", message: `Document ajouté : « ${doc.title} »`, actorId: admin.id, entityType: "document", entityId: doc.id })
     revalidatePath("/admin/documents")
     if (doc.saleId) revalidatePath(`/admin/ventes/${doc.saleId}`)
+    if (doc.constructionProjectId) revalidatePath(`/admin/construction/${doc.constructionProjectId}`)
     return ok({ id: doc.id }, "Document ajouté")
   })
 }
 
-const updateSchema = documentSchema.omit({ file: true, saleId: true }).partial()
+const updateSchema = documentSchema.omit({ file: true, saleId: true, constructionProjectId: true }).partial()
 
 export async function updateDocument(id: string, input: z.input<typeof updateSchema>): Promise<ActionResult<null>> {
   return run(async () => {
@@ -56,6 +60,7 @@ export async function updateDocument(id: string, input: z.input<typeof updateSch
     const doc = await db.document.update({ where: { id }, data })
     revalidatePath("/admin/documents")
     if (doc.saleId) revalidatePath(`/admin/ventes/${doc.saleId}`)
+    if (doc.constructionProjectId) revalidatePath(`/admin/construction/${doc.constructionProjectId}`)
     return ok(null, "Document mis à jour")
   })
 }
@@ -70,6 +75,7 @@ export async function deleteDocument(id: string): Promise<ActionResult<null>> {
     await logActivity({ type: "document", message: `Document supprimé : « ${doc.title} »`, actorId: admin.id })
     revalidatePath("/admin/documents")
     if (doc.saleId) revalidatePath(`/admin/ventes/${doc.saleId}`)
+    if (doc.constructionProjectId) revalidatePath(`/admin/construction/${doc.constructionProjectId}`)
     return ok(null, "Document supprimé")
   })
 }

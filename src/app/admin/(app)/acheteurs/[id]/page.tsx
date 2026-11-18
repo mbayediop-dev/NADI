@@ -2,13 +2,13 @@ import { Suspense } from "react"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ArrowUpRight, BadgeDollarSign, CalendarClock, Coins, IdCard, Mail, MapPin, Phone, ReceiptText, SquareStack, Wallet } from "lucide-react"
+import { ArrowUpRight, BadgeDollarSign, CalendarClock, Coins, IdCard, Mail, MapPin, Phone, Plus, ReceiptText, SquareStack, Wallet } from "lucide-react"
 import { db } from "@/lib/db"
 import { hasRole, requireAdmin } from "@/lib/auth/admin"
 import { getSettings } from "@/lib/settings"
 import { getBuyerSales } from "@/lib/queries/sales"
 import { formatArea, formatDate, formatDateTime, formatMoney, formatPercent, fullName, initials } from "@/lib/format"
-import { PAYMENT_METHOD, REQUEST_STATUS, SALE_STATUS } from "@/lib/labels"
+import { CONSTRUCTION_STATUS, PAYMENT_METHOD, REQUEST_STATUS, SALE_STATUS } from "@/lib/labels"
 import { formatPhone } from "@/lib/phone"
 import { PageHeader } from "@/components/admin/page-header"
 import { StatCard } from "@/components/admin/stat-card"
@@ -53,7 +53,14 @@ async function BuyerContent({ params }: { params: PageProps<"/admin/acheteurs/[i
     getSettings(),
   ])
   if (!buyer) notFound()
-  const sales = await getBuyerSales(id, { includeCancelled: true })
+  const [sales, projects] = await Promise.all([
+    getBuyerSales(id, { includeCancelled: true }),
+    db.constructionProject.findMany({
+      where: { buyerId: id },
+      select: { id: true, reference: true, title: true, status: true, contractAmount: true },
+      orderBy: { createdAt: "desc" },
+    }),
+  ])
   const currency = settings.currencyLabel
   const canEdit = hasRole(admin, "ADMIN")
   const live = sales.filter((s) => s.status !== "CANCELLED")
@@ -84,7 +91,7 @@ async function BuyerContent({ params }: { params: PageProps<"/admin/acheteurs/[i
         actions={
           <BuyerActions
             canEdit={canEdit}
-            hasSales={sales.length > 0}
+            hasSales={sales.length > 0 || projects.length > 0}
             companyName={settings.companyName}
             buyer={{
               id: buyer.id,
@@ -252,6 +259,38 @@ async function BuyerContent({ params }: { params: PageProps<"/admin/acheteurs/[i
                 Dernière connexion : <span className="font-medium text-foreground">{buyer.lastLoginAt ? formatDateTime(buyer.lastLoginAt) : "jamais"}</span>
               </p>
             </div>
+          </Card>
+
+          <Card
+            title="Construction"
+            description={projects.length === 0 ? "Aucun projet de construction" : `${projects.length} projet${projects.length > 1 ? "s" : ""}`}
+            action={
+              canEdit ? (
+                <Link href={`/admin/construction/nouveau?client=${buyer.id}`} className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+                  <Plus className="size-3.5" />
+                  Nouveau projet
+                </Link>
+              ) : undefined
+            }
+          >
+            {projects.length > 0 && (
+              <ul className="divide-y border-t">
+                {projects.map((project) => (
+                  <li key={project.id}>
+                    <Link href={`/admin/construction/${project.id}`} className="flex items-center justify-between gap-3 px-5 py-3 text-sm transition-colors hover:bg-muted/50">
+                      <span className="min-w-0">
+                        <span className="block truncate font-medium">{project.title}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {project.reference}
+                          {project.contractAmount ? ` · ${formatMoney(project.contractAmount, currency)}` : ""}
+                        </span>
+                      </span>
+                      <ToneBadge tone={CONSTRUCTION_STATUS[project.status].tone}>{CONSTRUCTION_STATUS[project.status].label}</ToneBadge>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
           </Card>
 
           {buyer.requests.length > 0 && (

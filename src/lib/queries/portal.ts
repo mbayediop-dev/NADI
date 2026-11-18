@@ -42,7 +42,8 @@ export async function getOwnerDocuments(buyerId: string) {
       orderBy: { createdAt: "desc" },
     }),
     db.document.findMany({
-      where: { saleId: null, visibility: { in: ["PUBLIC", "CLIENTS"] } },
+      // Les documents d'un projet de construction ne sont visibles que de son client (page « Construction »)
+      where: { saleId: null, constructionProjectId: null, visibility: { in: ["PUBLIC", "CLIENTS"] } },
       orderBy: [{ category: "asc" }, { createdAt: "desc" }],
     }),
   ])

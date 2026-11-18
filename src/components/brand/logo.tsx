@@ -1,52 +1,51 @@
+import { BRAND } from "@/lib/brand"
 import { cn } from "@/lib/utils"
+import { LOGO } from "./logo-paths"
 
+/** Symbole FUTURIA GROUP : le F biseauté (couleur du texte courant) et sa barre orange. Hauteur : 1em. */
 export function LogoMark({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 40 40" className={cn("size-9 shrink-0", className)} aria-hidden="true">
-      <rect width="40" height="40" rx="9" fill="var(--pine-deep)" />
-      <rect x="0.75" y="0.75" width="38.5" height="38.5" rx="8.25" fill="none" stroke="var(--gold)" strokeOpacity=".45" strokeWidth="1.5" />
-      <text x="20" y="28.5" textAnchor="middle" fontFamily="var(--font-serif), Georgia, serif" fontWeight="600" fontSize="23" fill="#fff">
-        N
-      </text>
-      <rect x="11" y="31.5" width="18" height="1.6" rx=".8" fill="var(--gold)" />
+    <svg viewBox={LOGO.mark.viewBox} className={cn("h-[1em] w-auto shrink-0", className)} aria-hidden="true">
+      <path d={LOGO.mark.stem} fill="currentColor" />
+      <path d={LOGO.mark.bar} fill={BRAND.colors.orange} />
     </svg>
   )
 }
 
-/** Logotype NADI GROUP : « NADI » en serif, « GROUP » en capitales espacées dorées. */
+/**
+ * Logo FUTURIA GROUP : symbole + « FUTURIA » / « GROUP » et filet orange.
+ * Le texte est en tracés (pas de police à charger) ; la hauteur du logo suit `size`.
+ * Le mot-symbole est le dernier `<span>` enfant : la barre latérale repliée de l'administration le masque.
+ */
 export function Logo({
   className,
   tone = "default",
-  mark = false,
   size = "default",
 }: {
   className?: string
   tone?: "default" | "light"
-  mark?: boolean
   size?: "default" | "lg"
 }) {
+  const { rule } = LOGO.wordmark
   return (
-    <span className={cn("inline-flex items-center gap-2.5", className)}>
-      {mark && <LogoMark />}
-      <span className="inline-flex items-baseline gap-2 leading-none whitespace-nowrap">
-        <span
-          className={cn(
-            "font-display font-semibold tracking-[-0.01em]",
-            size === "lg" ? "text-[2.1rem]" : "text-[1.6rem]",
-            tone === "light" ? "text-white" : "text-pine-deep",
-          )}
-        >
-          NADI
-        </span>
-        <span
-          className={cn(
-            "font-semibold tracking-[0.42em]",
-            size === "lg" ? "text-[0.85rem]" : "text-[0.7rem]",
-            tone === "light" ? "text-gold" : "text-gold-strong",
-          )}
-        >
-          GROUP
-        </span>
+    <span
+      role="img"
+      aria-label={BRAND.name}
+      className={cn(
+        "inline-flex items-center leading-none",
+        size === "lg" ? "text-[2.75rem]" : "text-[2.125rem]",
+        tone === "light" ? "text-white" : "text-pine-deep dark:text-white",
+        className,
+      )}
+      style={{ gap: `${LOGO.gap}em` }}
+    >
+      <LogoMark />
+      <span className="inline-flex shrink-0">
+        <svg viewBox={LOGO.wordmark.viewBox} className="h-[1em] w-auto" aria-hidden="true">
+          <path d={LOGO.wordmark.futuria} fill="currentColor" />
+          <path d={LOGO.wordmark.group} fill="currentColor" />
+          <rect x={rule.x} y={rule.y} width={rule.width} height={rule.height} fill={BRAND.colors.orange} />
+        </svg>
       </span>
     </span>
   )

@@ -98,9 +98,10 @@ export async function updateBuyer(id: string, input: BuyerInput): Promise<Action
 export async function deleteBuyer(id: string): Promise<ActionResult<null>> {
   return run(async () => {
     const admin = await assertAdmin("ADMIN")
-    const buyer = await db.buyer.findUnique({ where: { id }, include: { _count: { select: { sales: true } } } })
+    const buyer = await db.buyer.findUnique({ where: { id }, include: { _count: { select: { sales: true, constructionProjects: true } } } })
     if (!buyer) return fail("Acheteur introuvable")
     if (buyer._count.sales > 0) return fail("Impossible de supprimer un acheteur lié à des ventes.")
+    if (buyer._count.constructionProjects > 0) return fail("Impossible de supprimer un client lié à un projet de construction.")
     await db.buyer.delete({ where: { id } })
     await logActivity({ type: "buyer", message: `Acheteur supprimé : ${fullName(buyer)}`, actorId: admin.id })
     revalidatePath("/admin/acheteurs")

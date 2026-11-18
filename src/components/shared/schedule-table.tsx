@@ -26,10 +26,10 @@ export function ScheduleTable({ rows, currency, className }: { rows: ScheduleRow
           {rows.map((row) => (
             <tr key={row.index} className={cn(row.state === "LATE" && "bg-status-sold/5")}>
               <td className="px-4 py-2.5 font-medium">{row.label}</td>
-              <td className="px-4 py-2.5 text-muted-foreground tabular">{formatDate(row.dueDate)}</td>
-              <td className="px-4 py-2.5 text-right tabular">{formatMoney(row.amount, currency)}</td>
-              <td className="px-4 py-2.5 text-right tabular text-status-available-strong">{row.paid > 0 ? formatMoney(row.paid, currency) : "—"}</td>
-              <td className="px-4 py-2.5 text-right font-medium tabular">{row.remaining > 0 ? formatMoney(row.remaining, currency) : "—"}</td>
+              <td className="px-4 py-2.5 whitespace-nowrap text-muted-foreground tabular">{formatDate(row.dueDate)}</td>
+              <td className="px-4 py-2.5 text-right whitespace-nowrap tabular">{formatMoney(row.amount, currency)}</td>
+              <td className="px-4 py-2.5 text-right whitespace-nowrap tabular text-status-available-strong">{row.paid > 0 ? formatMoney(row.paid, currency) : "—"}</td>
+              <td className="px-4 py-2.5 text-right font-medium whitespace-nowrap tabular">{row.remaining > 0 ? formatMoney(row.remaining, currency) : "—"}</td>
               <td className="px-4 py-2.5 text-right">
                 <ToneBadge tone={INSTALLMENT_STATUS[row.state].tone}>{INSTALLMENT_STATUS[row.state].label}</ToneBadge>
               </td>

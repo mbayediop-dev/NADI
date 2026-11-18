@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/brand"
 import { Suspense } from "react"
 import type { Metadata } from "next"
 import Link from "next/link"
@@ -28,7 +29,7 @@ export default function AdminLoginPage({ searchParams }: PageProps<"/admin/login
             Terrains, acheteurs, échéanciers, versements et avancement des travaux : tout est réuni dans un seul outil.
           </p>
         </div>
-        <p className="relative text-xs text-white/50">© <CurrentYear /> NADI Group · Espace d&apos;administration</p>
+        <p className="relative text-xs text-white/50">© <CurrentYear /> {BRAND.name} · Espace d&apos;administration</p>
       </aside>
       <main className="flex items-center justify-center px-5 py-12">
         <div className="w-full max-w-sm">

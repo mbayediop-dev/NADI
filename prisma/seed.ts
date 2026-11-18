@@ -9,6 +9,7 @@ import type { PaymentFrequency, PaymentMethod } from "../src/generated/prisma/en
 import { databaseSsl } from "../src/lib/db-ssl"
 import { buildSchedule, resolvePlan, toDueDate } from "../src/lib/finance"
 import { guessMime, putObject } from "../src/lib/storage"
+import { seedConstruction } from "./seed/construction"
 import { buildLayout, PLAN } from "./seed/layout"
 
 const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL, ssl: databaseSsl() }) })
@@ -55,7 +56,7 @@ function makePdf(title: string, lines: string[]) {
     "BT /F1 20 Tf 60 770 Td (" + esc(title) + ") Tj ET",
     "0.75 0.6 0.35 RG 2 w 60 755 m 535 755 l S",
     ...lines.map((l, i) => `BT /F1 11 Tf 60 ${720 - i * 18} Td (${esc(l)}) Tj ET`),
-    "BT /F1 8 Tf 60 40 Td (Document de demonstration genere automatiquement - NADI Group) Tj ET",
+    "BT /F1 8 Tf 60 40 Td (Document de demonstration genere automatiquement - FUTURIA GROUP) Tj ET",
   ].join("\n")
   const objects = [
     "<< /Type /Catalog /Pages 2 0 R >>",
@@ -89,7 +90,16 @@ async function main() {
     db.activity.deleteMany(),
     db.smsLog.deleteMany(),
     db.otpCode.deleteMany(),
+    db.constructionMedia.deleteMany(),
+    db.constructionUpdate.deleteMany(),
+    db.expense.deleteMany(),
+    db.constructionPayment.deleteMany(),
+    db.constructionInstallment.deleteMany(),
+    db.constructionPhase.deleteMany(),
+    db.constructionQuote.deleteMany(),
     db.document.deleteMany(),
+    db.constructionProject.deleteMany(),
+    db.houseModel.deleteMany(),
     db.media.deleteMany(),
     db.siteUpdate.deleteMany(),
     db.milestone.deleteMany(),
@@ -108,7 +118,7 @@ async function main() {
   const admin = await db.adminUser.create({
     data: {
       email: (process.env.SEED_ADMIN_EMAIL ?? "admin@nadigroup.sn").toLowerCase(),
-      name: "Responsable NADI",
+      name: "Responsable FUTURIA",
       phone: "+221770000000",
       role: "OWNER",
       passwordHash: await bcrypt.hash(process.env.SEED_ADMIN_PASSWORD ?? "Nadi2026!", 10),
@@ -119,12 +129,12 @@ async function main() {
   const settings = await db.settings.create({
     data: {
       id: 1,
-      companyName: "NADI Group",
+      companyName: "FUTURIA GROUP",
       companyTagline: "Des terrains d'aujourd'hui pour les générations de demain.",
       companyAbout:
-        "Nous nous engageons à offrir des terrains de qualité, un suivi rigoureux et une transparence totale tout au long du processus. NADI Group accompagne les familles, les investisseurs et la diaspora à chaque étape : choix du terrain, paiement échelonné, suivi des travaux et remise des documents.",
-      companyPhone: "+221771234567",
-      companyWhatsapp: "+221771234567",
+        "Nous nous engageons à offrir des terrains de qualité, un suivi rigoureux et une transparence totale tout au long du processus. FUTURIA GROUP accompagne les familles, les investisseurs et la diaspora à chaque étape : choix du terrain, paiement échelonné, suivi des travaux et remise des documents.",
+      companyPhone: "+221773620772",
+      companyWhatsapp: "+221773620772",
       companyEmail: "contact@nadigroup.sn",
       companyAddress: "Dakar, Sénégal",
       businessHours: "Lun - Ven, 9h - 18h",
@@ -132,7 +142,7 @@ async function main() {
       socialInstagram: "https://www.instagram.com/",
       socialLinkedin: "https://www.linkedin.com/",
       socialYoutube: "https://www.youtube.com/",
-      siteName: "Domaine NADI",
+      siteName: "Domaine FUTURIA",
       siteLocation: "Sénégal",
       siteDescription:
         "Un domaine pensé pour offrir un **cadre de vie moderne, accessible et durable**. Profitez de terrains viabilisés, dans un environnement en pleine croissance, à proximité des commodités essentielles.",
@@ -154,7 +164,7 @@ async function main() {
         { title: "Fort potentiel", text: "Pour habitation ou investissement" },
       ],
       faq: [
-        { q: "Comment réserver un terrain ?", a: "Sélectionnez un terrain disponible sur le plan, puis cliquez sur « Réserver ce terrain » et laissez vos coordonnées. Un conseiller NADI Group vous rappelle pour finaliser la réservation." },
+        { q: "Comment réserver un terrain ?", a: "Sélectionnez un terrain disponible sur le plan, puis cliquez sur « Réserver ce terrain » et laissez vos coordonnées. Un conseiller FUTURIA GROUP vous rappelle pour finaliser la réservation." },
         { q: "Quel acompte dois-je verser ?", a: "Le montant de l'acompte est indiqué sur la fiche de chaque terrain. Il est versé à la signature, le solde est ensuite réparti en versements réguliers." },
         { q: "Quels moyens de paiement acceptez-vous ?", a: "Wave, Orange Money, Free Money, virement bancaire, chèque ou espèces contre reçu. Chaque versement est enregistré et visible dans votre espace propriétaire." },
         { q: "Puis-je acheter depuis l'étranger ?", a: "Oui. La réservation, le suivi des paiements et la consultation des documents se font entièrement en ligne." },
@@ -164,7 +174,7 @@ async function main() {
       heroEyebrow: "Un domaine, de grandes opportunités",
       heroTitle: "Construisez votre avenir | sur un domaine d'exception",
       heroSubtitle:
-        "NADI Group développe un domaine de 4 hectares au Sénégal, avec des terrains viabilisés, dans un environnement agréable et propice à la réalisation de vos projets de vie ou d'investissement.",
+        "FUTURIA GROUP développe un domaine de 4 hectares au Sénégal, avec des terrains viabilisés, dans un environnement agréable et propice à la réalisation de vos projets de vie ou d'investissement.",
       heroImageUrl: "/images/demo/hero.jpg",
       processImageUrl: "/images/demo/process.jpg",
       lotImages: ["/images/demo/lot-1.jpg", "/images/demo/lot-2.jpg", "/images/demo/lot-3.jpg"],
@@ -483,7 +493,7 @@ async function main() {
 
   console.log("→ Documents")
   const docs = [
-    { title: "Plan de lotissement", category: "PLAN", visibility: "PUBLIC", lines: ["Cite NADI - plan de lotissement", "Superficie totale : 4 ha", "Nombre de lots : 74", "Voirie : avenue de 14 m, rues de 10 m"] },
+    { title: "Plan de lotissement", category: "PLAN", visibility: "PUBLIC", lines: ["Domaine FUTURIA - plan de lotissement", "Superficie totale : 4 ha", "Nombre de lots : 74", "Voirie : avenue de 14 m, rues de 10 m"] },
     { title: "Brochure commerciale", category: "OTHER", visibility: "PUBLIC", lines: ["Terrains viabilises de 300 a 400 m2", "Paiement echelonne", "Espace client en ligne"] },
     { title: "Cahier des charges du lotissement", category: "ADMINISTRATIVE", visibility: "CLIENTS", lines: ["Regles de construction", "Hauteur maximale : R+2", "Retrait de 3 m sur rue", "Cloture obligatoire"] },
     { title: "Rapport d'étude géotechnique", category: "TECHNICAL", visibility: "CLIENTS", lines: ["Nature des sols par ilot", "Recommandations de fondations"] },
@@ -514,6 +524,17 @@ async function main() {
     })
   }
 
+  console.log("→ Construction : modèles, projets, versements, dépenses")
+  const construction = await seedConstruction({
+    db,
+    now: NOW,
+    adminId: admin.id,
+    buyers,
+    sales: createdSales.map(({ buyer, lot }) => ({ buyer, lot })),
+    storeFile,
+    makePdf,
+  })
+
   console.log("→ Journal d'activité")
   await db.activity.createMany({
     data: [
@@ -528,6 +549,7 @@ async function main() {
     payments: await db.payment.count(),
     buyers: await db.buyer.count(),
     requests: await db.reservationRequest.count(),
+    ...construction,
   }
   console.log("✓ Terminé", counts)
   console.log(`  Admin : ${admin.email} / ${process.env.SEED_ADMIN_PASSWORD ?? "Nadi2026!"}`)

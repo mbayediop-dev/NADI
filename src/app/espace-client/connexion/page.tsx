@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/brand"
 import { Suspense } from "react"
 import type { Metadata } from "next"
 import Link from "next/link"
@@ -12,7 +13,7 @@ import { OtpLoginForm } from "@/components/portal/otp-login-form"
 
 export const metadata: Metadata = {
   title: "Espace propriétaire",
-  description: "Connectez-vous à votre espace propriétaire NADI Group avec votre numéro de téléphone.",
+  description: `Connectez-vous à votre espace propriétaire ${BRAND.name} avec votre numéro de téléphone.`,
   robots: { index: false },
 }
 
@@ -63,7 +64,7 @@ export default function ClientLoginPage({ searchParams }: PageProps<"/espace-cli
               </li>
             ))}
           </ul>
-          <p className="mt-12 hidden text-xs text-white/45 lg:block">NADI Group · Aménageur foncier</p>
+          <p className="mt-12 hidden text-xs text-white/45 lg:block">{BRAND.name} · Aménageur foncier</p>
         </div>
       </aside>
 

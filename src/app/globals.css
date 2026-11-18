@@ -5,11 +5,14 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Identité NADI Group
- * - Pin profond (primaire) : la terre, la stabilité, le sérieux
- * - Or sahélien (accent) : la valeur, le patrimoine
- * - Sable (fond) : chaleur, lumière
+ * Identité FUTURIA GROUP
+ * - Marine (primaire) : #0B1F3A, la couleur du logo — sérieux, stabilité
+ * - Orange (accent) : #F26B21, la barre du logo — élan, repères visuels
+ * - Gris bleuté très clair (fond)
  * Statuts des terrains : vert disponible · ambre réservé · corail vendu · gris hors vente
+ *
+ * Les noms de variables datent de la première identité et sont conservés pour ne pas toucher aux composants :
+ * `pine` / `pine-deep` = marine, `gold` / `gold-strong` = orange d'accent, `sand` = fond teinté.
  */
 
 @theme inline {
@@ -99,31 +102,31 @@
 :root {
   --radius: 0.5rem;
 
-  --background: oklch(0.98 0.006 85);
-  --foreground: oklch(0.227 0.025 168);
+  --background: oklch(0.985 0.003 255);
+  --foreground: oklch(0.21 0.035 258);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.227 0.025 168);
+  --card-foreground: oklch(0.21 0.035 258);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.227 0.025 168);
-  --primary: oklch(0.33 0.058 167);
-  --primary-foreground: oklch(0.985 0.008 90);
-  --secondary: oklch(0.955 0.014 160);
-  --secondary-foreground: oklch(0.3 0.05 168);
-  --muted: oklch(0.962 0.008 86);
-  --muted-foreground: oklch(0.5 0.018 175);
-  --accent: oklch(0.955 0.01 120);
-  --accent-foreground: oklch(0.25 0.03 170);
+  --popover-foreground: oklch(0.21 0.035 258);
+  --primary: oklch(0.3 0.07 257);
+  --primary-foreground: oklch(0.985 0.004 250);
+  --secondary: oklch(0.955 0.012 255);
+  --secondary-foreground: oklch(0.28 0.06 258);
+  --muted: oklch(0.965 0.005 255);
+  --muted-foreground: oklch(0.5 0.025 258);
+  --accent: oklch(0.955 0.01 255);
+  --accent-foreground: oklch(0.24 0.04 258);
   --destructive: oklch(0.58 0.21 26);
-  --border: oklch(0.91 0.011 86);
-  --input: oklch(0.89 0.012 86);
-  --ring: oklch(0.55 0.09 165);
+  --border: oklch(0.915 0.008 255);
+  --input: oklch(0.89 0.01 255);
+  --ring: oklch(0.55 0.1 257);
 
-  --gold: oklch(0.797 0.115 79);
-  --gold-strong: oklch(0.56 0.105 72);
-  --gold-foreground: oklch(0.24 0.04 70);
-  --pine: oklch(0.33 0.058 167);
-  --pine-deep: oklch(0.288 0.053 169);
-  --sand: oklch(0.965 0.01 87.5);
+  --gold: oklch(0.684 0.184 44.4);
+  --gold-strong: oklch(0.55 0.16 42);
+  --gold-foreground: oklch(0.2 0.04 258);
+  --pine: oklch(0.3 0.07 257);
+  --pine-deep: oklch(0.239 0.058 256.7);
+  --sand: oklch(0.965 0.008 255);
 
   --status-available: oklch(0.62 0.13 145);
   --status-available-strong: oklch(0.5 0.138 149);
@@ -133,60 +136,60 @@
   --status-sold-strong: oklch(0.5 0.16 23);
   --status-unavailable: oklch(0.74 0.01 240);
 
-  --chart-1: oklch(0.38 0.07 168);
-  --chart-2: oklch(0.78 0.115 79);
+  --chart-1: oklch(0.36 0.08 257);
+  --chart-2: oklch(0.684 0.184 44.4);
   --chart-3: oklch(0.64 0.15 152);
-  --chart-4: oklch(0.63 0.15 35);
-  --chart-5: oklch(0.6 0.04 240);
+  --chart-4: oklch(0.68 0.11 215);
+  --chart-5: oklch(0.62 0.03 255);
 
-  --sidebar: oklch(0.288 0.053 169);
-  --sidebar-foreground: oklch(0.9 0.015 120);
-  --sidebar-primary: oklch(0.797 0.115 79);
-  --sidebar-primary-foreground: oklch(0.22 0.04 70);
-  --sidebar-accent: oklch(0.34 0.055 168);
-  --sidebar-accent-foreground: oklch(0.98 0.01 90);
-  --sidebar-border: oklch(0.36 0.05 168);
-  --sidebar-ring: oklch(0.797 0.115 79);
+  --sidebar: oklch(0.239 0.058 256.7);
+  --sidebar-foreground: oklch(0.9 0.015 250);
+  --sidebar-primary: oklch(0.684 0.184 44.4);
+  --sidebar-primary-foreground: oklch(0.2 0.04 258);
+  --sidebar-accent: oklch(0.3 0.06 257);
+  --sidebar-accent-foreground: oklch(0.98 0.005 250);
+  --sidebar-border: oklch(0.33 0.055 257);
+  --sidebar-ring: oklch(0.684 0.184 44.4);
 }
 
 .dark {
-  --background: oklch(0.165 0.014 175);
-  --foreground: oklch(0.95 0.01 90);
-  --card: oklch(0.2 0.017 175);
-  --card-foreground: oklch(0.95 0.01 90);
-  --popover: oklch(0.21 0.017 175);
-  --popover-foreground: oklch(0.95 0.01 90);
-  --primary: oklch(0.74 0.11 165);
-  --primary-foreground: oklch(0.18 0.03 170);
-  --secondary: oklch(0.26 0.025 170);
-  --secondary-foreground: oklch(0.92 0.02 160);
-  --muted: oklch(0.245 0.016 175);
-  --muted-foreground: oklch(0.7 0.02 160);
-  --accent: oklch(0.27 0.02 170);
-  --accent-foreground: oklch(0.95 0.01 90);
+  --background: oklch(0.17 0.02 258);
+  --foreground: oklch(0.95 0.008 250);
+  --card: oklch(0.205 0.024 258);
+  --card-foreground: oklch(0.95 0.008 250);
+  --popover: oklch(0.215 0.024 258);
+  --popover-foreground: oklch(0.95 0.008 250);
+  --primary: oklch(0.74 0.1 250);
+  --primary-foreground: oklch(0.18 0.035 258);
+  --secondary: oklch(0.26 0.03 258);
+  --secondary-foreground: oklch(0.92 0.02 250);
+  --muted: oklch(0.245 0.02 258);
+  --muted-foreground: oklch(0.7 0.025 250);
+  --accent: oklch(0.27 0.028 258);
+  --accent-foreground: oklch(0.95 0.008 250);
   --destructive: oklch(0.68 0.19 24);
   --border: oklch(1 0 0 / 9%);
   --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.6 0.1 165);
+  --ring: oklch(0.6 0.1 255);
 
-  --gold: oklch(0.79 0.12 80);
-  --gold-strong: oklch(0.82 0.12 80);
-  --gold-foreground: oklch(0.22 0.04 70);
-  --sand: oklch(0.22 0.015 85);
+  --gold: oklch(0.74 0.16 50);
+  --gold-strong: oklch(0.78 0.14 55);
+  --gold-foreground: oklch(0.2 0.04 258);
+  --sand: oklch(0.22 0.02 258);
 
   --status-available-strong: oklch(0.78 0.14 152);
   --status-reserved-strong: oklch(0.82 0.14 70);
   --status-sold-strong: oklch(0.75 0.15 27);
 
-  --chart-1: oklch(0.72 0.11 165);
-  --chart-2: oklch(0.79 0.12 80);
+  --chart-1: oklch(0.72 0.1 250);
+  --chart-2: oklch(0.74 0.16 50);
   --chart-3: oklch(0.68 0.15 152);
-  --chart-4: oklch(0.68 0.15 35);
-  --chart-5: oklch(0.65 0.04 240);
+  --chart-4: oklch(0.72 0.1 215);
+  --chart-5: oklch(0.68 0.03 255);
 
-  --sidebar: oklch(0.15 0.014 175);
-  --sidebar-foreground: oklch(0.88 0.015 120);
-  --sidebar-accent: oklch(0.22 0.02 172);
+  --sidebar: oklch(0.15 0.02 258);
+  --sidebar-foreground: oklch(0.88 0.015 250);
+  --sidebar-accent: oklch(0.22 0.028 258);
   --sidebar-border: oklch(1 0 0 / 8%);
 }
 

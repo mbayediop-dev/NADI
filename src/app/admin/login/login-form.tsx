@@ -1,5 +1,6 @@
 "use client"
 
+import { BRAND } from "@/lib/brand"
 import * as React from "react"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Loader2, LockKeyhole } from "lucide-react"
@@ -42,7 +43,7 @@ export function LoginForm({ setup, next }: { setup: boolean; next?: string }) {
         <p className="mt-1 text-sm text-muted-foreground">
           {setup
             ? "Première utilisation : créez le compte qui administrera le site."
-            : "Accédez à l'espace de gestion NADI Group."}
+            : `Accédez à l'espace de gestion ${BRAND.name}.`}
         </p>
       </div>
 
@@ -54,7 +55,7 @@ export function LoginForm({ setup, next }: { setup: boolean; next?: string }) {
       )}
       <div className="space-y-2">
         <Label htmlFor="email">Adresse e-mail</Label>
-        <Input id="email" name="email" type="email" required autoComplete="email" placeholder="vous@nadigroup.sn" className="h-11" />
+        <Input id="email" name="email" type="email" required autoComplete="email" placeholder="vous@exemple.com" className="h-11" />
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">Mot de passe</Label>

@@ -35,6 +35,8 @@ export default function DocumentsPage() {
 async function DocumentsContent() {
   const admin = await requireAdmin()
   const documents = await db.document.findMany({
+    // Les documents des projets de construction se gèrent depuis la fiche du projet
+    where: { constructionProjectId: null },
     orderBy: { createdAt: "desc" },
     include: { sale: { select: { id: true, reference: true, buyer: { select: { firstName: true, lastName: true } } } } },
   })

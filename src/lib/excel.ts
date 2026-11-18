@@ -1,4 +1,5 @@
 import "server-only"
+import { BRAND } from "@/lib/brand"
 import ExcelJS from "exceljs"
 
 export type SheetColumn<T> = { header: string; key: string; width?: number; value: (row: T) => string | number | Date | boolean | null | undefined; numFmt?: string }
@@ -9,7 +10,7 @@ export const DATE_FMT = "dd/mm/yyyy"
 /** Crée un classeur Excel stylé (en-têtes colorés, colonnes figées, filtres). */
 export async function buildWorkbook<T>(sheets: { name: string; columns: SheetColumn<T>[]; rows: T[] }[]) {
   const wb = new ExcelJS.Workbook()
-  wb.creator = "NADI Group"
+  wb.creator = BRAND.name
   wb.created = new Date()
   for (const sheet of sheets) {
     const ws = wb.addWorksheet(sheet.name.slice(0, 31), { views: [{ state: "frozen", ySplit: 1 }] })

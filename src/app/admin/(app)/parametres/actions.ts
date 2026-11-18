@@ -1,5 +1,6 @@
 "use server"
 
+import { BRAND } from "@/lib/brand"
 import bcrypt from "bcryptjs"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
@@ -188,7 +189,7 @@ export async function sendTestSms(phone: string): Promise<ActionResult<null>> {
     const to = normalizePhone(phone, env.defaultCountry)
     if (!to) return fail("Numéro de téléphone invalide")
     const settings = await db.settings.findUnique({ where: { id: 1 }, select: { companyName: true } })
-    const result = await sendSms(to, `${settings?.companyName ?? "NADI Group"} : ceci est un SMS de test. La configuration de l'envoi fonctionne.`, "MANUAL")
+    const result = await sendSms(to, `${settings?.companyName ?? BRAND.name} : ceci est un SMS de test. La configuration de l'envoi fonctionne.`, "MANUAL")
     if (!result.ok) return fail(`Échec de l'envoi : ${result.error}`)
     await logActivity({ type: "settings", message: `SMS de test envoyé au ${to}`, actorId: admin.id })
     refresh()

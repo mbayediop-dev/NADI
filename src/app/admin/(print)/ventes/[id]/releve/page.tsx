@@ -32,13 +32,13 @@ async function Statement({ params }: { params: PageProps<"/admin/ventes/[id]/rel
   const currency = settings.currencyLabel
   const installments = sale.installments.filter((i) => i.index > 0)
   const payments = [...sale.payments].sort((a, b) => a.paidAt.getTime() - b.paidAt.getTime())
-  const muted = "text-[oklch(0.48_0.02_175)]"
+  const muted = "text-[oklch(0.48_0.02_258)]"
 
   return (
     <>
       <PrintToolbar back={{ href: `/admin/ventes/${sale.id}`, label: "Retour à la vente" }} />
-      <article className="mx-auto w-full max-w-[760px] overflow-hidden rounded-2xl border bg-white text-[13px] text-[oklch(0.22_0.02_175)] shadow-sm print:max-w-none print:rounded-none print:border-0 print:shadow-none">
-        <header className="flex flex-col gap-6 border-b bg-[oklch(0.975_0.01_85)] p-8 sm:flex-row sm:items-start sm:justify-between print:flex-row">
+      <article className="mx-auto w-full max-w-[760px] overflow-hidden rounded-2xl border bg-white text-[13px] text-[oklch(0.22_0.02_258)] shadow-sm print:max-w-none print:rounded-none print:border-0 print:shadow-none">
+        <header className="flex flex-col gap-6 border-b bg-[oklch(0.972_0.006_255)] p-8 sm:flex-row sm:items-start sm:justify-between print:flex-row">
           <div>
             <Logo />
             <div className={cn("mt-4 space-y-0.5 text-xs", muted)}>
@@ -48,7 +48,7 @@ async function Statement({ params }: { params: PageProps<"/admin/ventes/[id]/rel
             </div>
           </div>
           <div className="sm:text-right print:text-right">
-            <p className="text-[0.7rem] font-bold tracking-[0.25em] text-[oklch(0.52_0.1_70)]">RELEVÉ DE COMPTE</p>
+            <p className="text-[0.7rem] font-bold tracking-[0.25em] text-[oklch(0.55_0.16_42)]">RELEVÉ DE COMPTE</p>
             <p className="mt-1 text-2xl font-extrabold tabular">{sale.reference}</p>
             <p className={cn("mt-1 text-sm", muted)}>Édité le {formatDateLong(new Date())}</p>
             <p className={cn("text-sm", muted)}>Statut : {SALE_STATUS[sale.status].label}</p>

@@ -7,6 +7,7 @@ import { DomainSection } from "@/components/site/domain-section"
 import { TerrainsSection } from "@/components/site/terrains-section"
 import { ProgressShowcase } from "@/components/site/progress-showcase"
 import { FinancingSection } from "@/components/site/financing-section"
+import { ConstructionTeaser } from "@/components/site/construction-section"
 import { AboutSection } from "@/components/site/about-section"
 import { ContactSection } from "@/components/site/contact-section"
 import { LandingSkeleton } from "@/components/site/skeletons"
@@ -66,6 +67,7 @@ async function Landing() {
       <TerrainsSection lots={lots} photos={s.lotImages} plan={plan} currency={s.currencyLabel} showPrices={s.showPricesPublicly} />
       <ProgressShowcase updates={progress.updates} />
       <FinancingSection companyName={s.companyName} currency={s.currencyLabel} minDeposit={s.showPricesPublicly ? minDeposit : null} maxInstallments={maxInstallments} />
+      <ConstructionTeaser companyName={s.companyName} imageUrl={null} />
       <AboutSection companyName={s.companyName} about={s.companyAbout} imageUrl={s.processImageUrl} videoUrl={s.aboutVideoUrl} plan={plan} lots={lots} />
       <ContactSection
         companyName={s.companyName}

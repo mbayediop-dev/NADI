@@ -1,8 +1,10 @@
 import { Suspense } from "react"
 import type { Metadata } from "next"
 import Link from "next/link"
+import { redirect } from "next/navigation"
 import {
   ArrowRight,
+  Building2,
   CalendarDays,
   ChevronRight,
   Compass,
@@ -18,9 +20,10 @@ import {
 import { requireBuyer } from "@/lib/auth/client"
 import { getSettings } from "@/lib/settings"
 import { getPlanLots, planImage } from "@/lib/queries/plan"
+import { getBuyerProjects } from "@/lib/queries/construction"
 import { getOwnerDocuments, getOwnerSales, getOwnerUpdates, getWorksProgress } from "@/lib/queries/portal"
 import { formatDate, formatDateLong, formatMoney, formatRelative } from "@/lib/format"
-import { INSTALLMENT_STATUS, PAYMENT_METHOD } from "@/lib/labels"
+import { CONSTRUCTION_STATUS, INSTALLMENT_STATUS, PAYMENT_METHOD } from "@/lib/labels"
 import { cn } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ToneBadge } from "@/components/shared/badges"
@@ -42,14 +45,19 @@ export default function PortalHomePage({ searchParams }: PageProps<"/espace-clie
 
 async function HomeContent({ searchParams }: { searchParams: PageProps<"/espace-client">["searchParams"] }) {
   const buyer = await requireBuyer()
-  const [{ vente }, settings, sales, works, updates, docs] = await Promise.all([
+  const [{ vente }, settings, sales, works, updates, docs, projects] = await Promise.all([
     searchParams,
     getSettings(),
     getOwnerSales(buyer.id),
     getWorksProgress(),
     getOwnerUpdates(1),
     getOwnerDocuments(buyer.id),
+    getBuyerProjects(buyer.id),
   ])
+  // Client sans terrain chez nous mais avec un projet de construction : son espace, c'est son projet
+  if (sales.length === 0 && projects.length > 0) {
+    redirect(projects.length === 1 ? `/espace-client/construction/${projects[0].id}` : "/espace-client/construction")
+  }
   const lots = await getPlanLots({ settings, audience: "client" })
   const now = new Date()
   const currency = settings.currencyLabel
@@ -259,6 +267,37 @@ async function HomeContent({ searchParams }: { searchParams: PageProps<"/espace-
           )}
         </div>
       </PortalCard>
+
+      <Link
+        href={projects.length === 1 ? `/espace-client/construction/${projects[0].id}` : "/espace-client/construction"}
+        className="group flex items-center gap-4 rounded-3xl border bg-card p-4 shadow-xs transition-all hover:-translate-y-0.5 hover:shadow-md sm:p-5"
+      >
+        <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-gold/20 text-gold-strong">
+          <Building2 className="size-5" />
+        </span>
+        <span className="min-w-0 flex-1">
+          {projects.length > 0 ? (
+            <>
+              <span className="block font-bold">
+                {projects.length === 1 ? projects[0].title : `${projects.length} projets de construction`}
+              </span>
+              <span className="block truncate text-sm text-muted-foreground">
+                {projects.length === 1
+                  ? `${CONSTRUCTION_STATUS[projects[0].status].label} · chantier à ${projects[0].summary.progress} %`
+                  : "Offres, versements, photos et dépenses de vos chantiers"}
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="block font-bold">Faire construire ma maison</span>
+              <span className="block text-sm text-muted-foreground">
+                {settings.companyName} bâtit sur votre terrain : offre détaillée, chantier en photos, dépenses partagées.
+              </span>
+            </>
+          )}
+        </span>
+        <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+      </Link>
 
       <div className="grid grid-cols-3 gap-3">
         {[

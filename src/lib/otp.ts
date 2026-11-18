@@ -1,4 +1,5 @@
 import "server-only"
+import { BRAND } from "@/lib/brand"
 import { createHmac, randomInt, timingSafeEqual } from "node:crypto"
 import { UserError } from "@/lib/action"
 import { db } from "@/lib/db"
@@ -52,10 +53,14 @@ function checkIp(ip: string | null) {
   ipRequests.set(ip, recent)
 }
 
-/** Propriétaire autorisé à se connecter avec ce numéro (au moins une vente non annulée). */
+/** Client autorisé à se connecter avec ce numéro : au moins une vente non annulée ou un projet de construction en cours. */
 export async function findOwnerByPhone(phone: string) {
   return db.buyer.findFirst({
-    where: { phone, portalEnabled: true, sales: { some: { status: { not: "CANCELLED" } } } },
+    where: {
+      phone,
+      portalEnabled: true,
+      OR: [{ sales: { some: { status: { not: "CANCELLED" } } } }, { constructionProjects: { some: { status: { not: "CANCELLED" } } } }],
+    },
     select: { id: true, firstName: true, lastName: true, phone: true },
   })
 }
@@ -69,7 +74,7 @@ export function parseOwnerPhone(input: string) {
 export async function issueOtp(input: string, ip: string | null) {
   const phone = parseOwnerPhone(input)
   const owner = await findOwnerByPhone(phone)
-  if (!owner) throw new UserError("Ce numéro n'est associé à aucun propriétaire. Contactez NADI Group.")
+  if (!owner) throw new UserError(`Ce numéro n'est associé à aucun propriétaire. Contactez ${BRAND.name}.`)
 
   const now = Date.now()
   const recent = await db.otpCode.findMany({
@@ -85,7 +90,7 @@ export async function issueOtp(input: string, ip: string | null) {
     }
   }
   if (recent.length >= MAX_PER_HOUR) {
-    throw new UserError("Nombre maximal de codes atteint. Réessayez dans une heure ou contactez NADI Group.")
+    throw new UserError(`Nombre maximal de codes atteint. Réessayez dans une heure ou contactez ${BRAND.name}.`)
   }
   checkIp(ip)
 
@@ -96,7 +101,7 @@ export async function issueOtp(input: string, ip: string | null) {
     data: { phone, codeHash: hashCode(phone, code), expiresAt: new Date(now + OTP_TTL_MS), ip },
   })
 
-  const sms = await sendSms(phone, `NADI Group : votre code de connexion est ${code}. Il expire dans 5 minutes.`, "OTP")
+  const sms = await sendSms(phone, `${BRAND.name} : votre code de connexion est ${code}. Il expire dans 5 minutes.`, "OTP")
   if (!sms.ok) throw new UserError("L'envoi du SMS a échoué. Réessayez dans un instant.")
 
   const simulated = smsIsSimulated() && !env.isProduction
@@ -140,6 +145,6 @@ export async function checkOtp(input: string, code: string) {
   if (consumed.count === 0) throw new UserError("Ce code a déjà été utilisé. Demandez-en un nouveau.")
 
   const owner = await findOwnerByPhone(phone)
-  if (!owner) throw new UserError("Ce numéro n'est associé à aucun propriétaire. Contactez NADI Group.")
+  if (!owner) throw new UserError(`Ce numéro n'est associé à aucun propriétaire. Contactez ${BRAND.name}.`)
   return owner
 }

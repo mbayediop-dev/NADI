@@ -33,6 +33,7 @@ async function main() {
   const refs = new Map<string, string | null>()
   for (const d of documents) refs.set(d.storageKey, d.mimeType)
   for (const m of media) if (m.storageKey) refs.set(m.storageKey, m.mimeType)
+  if (settings?.signatureKey) refs.set(settings.signatureKey, "image/png") // cachet et signature des reçus
   const images = [settings?.logoUrl, settings?.heroImageUrl, settings?.processImageUrl, settings?.contactImageUrl, settings?.planImageUrl, settings?.aboutVideoUrl]
   const lotImages = Array.isArray(settings?.lotImages) ? (settings.lotImages as unknown[]) : []
   for (const value of [...images, ...lotImages]) {

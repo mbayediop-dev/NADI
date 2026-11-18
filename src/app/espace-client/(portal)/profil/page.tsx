@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/brand"
 import { Suspense } from "react"
 import type { Metadata } from "next"
 import { BadgeCheck, Briefcase, CalendarDays, Headset, IdCard, Mail, MapPin, MapPinned, Phone, UserRound } from "lucide-react"
@@ -18,7 +19,7 @@ export const metadata: Metadata = { title: "Mon profil" }
 export default function ProfilePage() {
   return (
     <>
-      <PageTitle title="Mon profil" description="Vos informations personnelles enregistrées par NADI Group." />
+      <PageTitle title="Mon profil" description={`Vos informations personnelles enregistrées par ${BRAND.name}.`} />
       <Suspense fallback={<Skeleton className="h-[480px] rounded-3xl" />}>
         <ProfileContent />
       </Suspense>
