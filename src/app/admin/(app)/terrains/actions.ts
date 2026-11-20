@@ -10,6 +10,10 @@ import { logActivity } from "@/lib/activity"
 import { getSettings } from "@/lib/settings"
 import { readFirstSheet } from "@/lib/excel"
 import { analyzeImport, FREQUENCIES, importRowSchema, lotSchema, type ImportPreview, type LotInput } from "@/lib/lot-import"
+import { roundingSchema, roundTo, siteLotPrice, sitePricing, type SitePricing } from "@/lib/lot-pricing"
+import { MONTHS_PER_PERIOD } from "@/lib/finance"
+import { FREQUENCY } from "@/lib/labels"
+import { applySitePricing, updateLotAmounts } from "@/lib/lot-prices"
 
 function revalidateLots(id?: string) {
   revalidatePath("/admin/terrains")
@@ -26,18 +30,6 @@ async function hasLiveSale(lotId: string) {
   return (await db.sale.count({ where: { lotId, status: { not: "CANCELLED" } } })) > 0
 }
 
-/**
- * Applique prix et acompte à plusieurs terrains en une seule requête (atomique, un seul aller-retour).
- * Une mise à jour par terrain dans une transaction dépasse le délai autorisé dès que la base est distante.
- */
-function updateLotAmounts(rows: { id: string; price: number | null; depositAmount: number | null }[]) {
-  return db.$executeRaw`
-    UPDATE "Lot" AS l
-    SET "price" = v."price", "depositAmount" = v."depositAmount", "updatedAt" = (now() AT TIME ZONE 'UTC')
-    FROM jsonb_to_recordset(${JSON.stringify(rows)}::jsonb) AS v("id" text, "price" double precision, "depositAmount" double precision)
-    WHERE l."id" = v."id"`
-}
-
 function uniqueError(error: unknown): never {
   if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
     throw new UserError("Ce numéro de terrain existe déjà.")
@@ -45,15 +37,27 @@ function uniqueError(error: unknown): never {
   throw error
 }
 
+/**
+ * Prix enregistré pour un terrain : celui du site (surface × prix du m²) s'il le suit, sinon le prix saisi.
+ * Un terrain vendu garde son prix (`keep`). L'acompte ne peut pas dépasser le prix retenu.
+ */
+function lotPrice(data: { areaM2: number; price: number | null; customPrice: boolean; depositAmount: number | null }, pricing: SitePricing, keep?: number | null) {
+  const follows = pricing.pricePerM2 != null && !data.customPrice
+  const price = follows ? (keep !== undefined ? keep : siteLotPrice(data.areaM2, pricing)) : data.price == null ? null : round(data.price)
+  if (price != null && data.depositAmount != null && data.depositAmount > price) throw new UserError("L'acompte ne peut pas dépasser le prix du terrain.")
+  return price
+}
+
 export async function createLot(input: LotInput): Promise<ActionResult<{ id: string }>> {
   return run(async () => {
     const admin = await assertAdmin("ADMIN")
     const data = lotSchema.parse(input)
+    const pricing = sitePricing(await getSettings())
     const lot = await db.lot
       .create({
         data: {
           ...data,
-          price: data.price == null ? null : round(data.price),
+          price: lotPrice(data, pricing),
           depositAmount: data.depositAmount == null ? null : round(data.depositAmount),
           installmentAmount: data.installmentAmount == null ? null : round(data.installmentAmount),
           reservedNote: data.status === "RESERVED" ? data.reservedNote : null,
@@ -73,12 +77,14 @@ export async function updateLot(id: string, input: LotInput): Promise<ActionResu
     const current = await db.lot.findUnique({ where: { id } })
     if (!current) return fail("Terrain introuvable")
     const locked = await hasLiveSale(id)
+    const pricing = sitePricing(await getSettings())
     const lot = await db.lot
       .update({
         where: { id },
         data: {
           ...data,
-          price: data.price == null ? null : round(data.price),
+          // Terrain vendu : le prix du site ne s'applique plus (le prix convenu est dans la vente)
+          price: lotPrice(data, pricing, locked || current.status === "SOLD" ? current.price : undefined),
           depositAmount: data.depositAmount == null ? null : round(data.depositAmount),
           installmentAmount: data.installmentAmount == null ? null : round(data.installmentAmount),
           status: locked ? current.status : data.status,
@@ -129,16 +135,92 @@ export async function deleteLot(id: string): Promise<ActionResult<null>> {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Conditions de vente du site : prix du m², caution par défaut, durée du paiement du solde
+// ─────────────────────────────────────────────────────────────
+
+const siteTermsSchema = z.object({
+  pricePerM2: z.number().positive("Indiquez un prix du m²").max(100_000_000, "Montant trop élevé").nullable(),
+  rounding: roundingSchema.default(1000),
+  depositRate: z.number({ error: "Indiquez la caution" }).min(0, "La caution ne peut pas être négative").max(100, "La caution ne peut pas dépasser 100 %"),
+  durationMonths: z.number({ error: "Indiquez la durée" }).int("Durée en mois entiers").min(1, "Au moins 1 mois").max(600, "Durée trop longue"),
+  frequency: z.enum(["MONTHLY", "BIMONTHLY", "QUARTERLY", "SEMIANNUAL", "ANNUAL"]),
+})
+
+export type SiteTermsInput = z.input<typeof siteTermsSchema>
+
+/**
+ * Enregistre les conditions de vente du site et recalcule aussitôt le prix des terrains qui suivent le prix du site
+ * (ni prix particulier, ni vendus). Caution et durée sont les modalités par défaut (Settings.defaultDepositRate,
+ * defaultInstallments, defaultFrequency) : elles s'appliquent d'elles-mêmes aux terrains sans modalités propres.
+ * Retirer le prix du m² (`null`) laisse les prix actuels en place.
+ */
+export async function setSiteTerms(input: SiteTermsInput): Promise<ActionResult<{ updated: number }>> {
+  return run(async () => {
+    const admin = await assertAdmin("ADMIN")
+    const { pricePerM2, rounding, depositRate, durationMonths, frequency } = siteTermsSchema.parse(input)
+    const months = MONTHS_PER_PERIOD[frequency] ?? 1
+    if (durationMonths % months !== 0) {
+      return fail(`Avec des versements ${FREQUENCY[frequency].label.toLowerCase()}s, la durée doit être un multiple de ${months} mois.`)
+    }
+    const pricing = { pricePerM2: pricePerM2 == null ? null : Math.round(pricePerM2), rounding }
+    const data = {
+      lotPricePerM2: pricing.pricePerM2,
+      lotPriceRounding: rounding,
+      defaultDepositRate: Math.round(depositRate * 100) / 100,
+      defaultInstallments: durationMonths / months,
+      defaultFrequency: frequency,
+    }
+    const updated = await db.$transaction(async (tx) => {
+      await tx.settings.upsert({ where: { id: 1 }, create: { id: 1, ...data }, update: data })
+      return applySitePricing(pricing, { client: tx })
+    })
+    const settings = await getSettings()
+    const fmt = (n: number) => new Intl.NumberFormat("fr-FR").format(n)
+    await logActivity({
+      type: "settings",
+      message: `Conditions de vente du site : ${
+        pricing.pricePerM2 == null ? "sans prix du m²" : `${fmt(pricing.pricePerM2)} ${settings.currencyLabel}/m² (${updated} terrain${updated > 1 ? "s" : ""} recalculé${updated > 1 ? "s" : ""})`
+      }, caution ${fmt(data.defaultDepositRate)} %, solde sur ${durationMonths} mois`,
+      actorId: admin.id,
+    })
+    revalidateLots()
+    revalidatePath("/admin/parametres")
+    return ok(
+      { updated },
+      pricing.pricePerM2 != null && updated > 0
+        ? `Conditions enregistrées : ${updated} prix de terrain mis à jour`
+        : "Conditions de vente enregistrées",
+    )
+  })
+}
+
+// ─────────────────────────────────────────────────────────────
 // Actions groupées
 // ─────────────────────────────────────────────────────────────
 
 const idsSchema = z.array(z.string().min(1)).min(1, "Aucun terrain sélectionné").max(2000)
-const roundingSchema = z.union([z.literal(1), z.literal(1000), z.literal(5000), z.literal(10000), z.literal(50000), z.literal(100000)])
 
-function roundTo(value: number, step: number) {
-  return Math.round(value / step) * step
+/** Remet des terrains au prix du site (retire leur prix particulier) et recalcule leur prix. */
+export async function bulkUseSitePrice(ids: string[]): Promise<ActionResult<{ updated: number; skipped: number }>> {
+  return run(async () => {
+    const admin = await assertAdmin("ADMIN")
+    const lotIds = idsSchema.parse(ids)
+    const pricing = sitePricing(await getSettings())
+    if (pricing.pricePerM2 == null) return fail("Définissez d'abord le prix du m² du site.")
+    const updated = await db.$transaction(async (tx) => {
+      const result = await tx.lot.updateMany({ where: { id: { in: lotIds }, status: { not: "SOLD" } }, data: { customPrice: false } })
+      await applySitePricing(pricing, { lotIds, client: tx })
+      return result.count
+    })
+    const skipped = lotIds.length - updated
+    await logActivity({ type: "lot", message: `${updated} terrain${updated > 1 ? "s" : ""} remis au prix du site`, actorId: admin.id })
+    revalidateLots()
+    return ok(
+      { updated, skipped },
+      `${updated} terrain${updated > 1 ? "s" : ""} au prix du site${skipped ? ` · ${skipped} vendu${skipped > 1 ? "s" : ""} ignoré${skipped > 1 ? "s" : ""}` : ""}`,
+    )
+  })
 }
-
 const bulkPriceSchema = z.object({
   mode: z.enum(["fixed", "perM2"]),
   value: z.number().positive("Montant invalide"),
@@ -170,11 +252,18 @@ export async function bulkSetPrice(ids: string[], input: z.input<typeof bulkPric
       }
       rows.push({ id: lot.id, price, depositAmount })
     }
-    if (rows.length > 0) await updateLotAmounts(rows)
+    // Avec un prix du m² du site, un prix posé à la main devient un prix particulier (sinon le prochain recalcul l'écraserait)
+    const custom = sitePricing(settings).pricePerM2 != null
+    if (rows.length > 0) {
+      await db.$transaction([
+        updateLotAmounts(rows),
+        ...(custom ? [db.lot.updateMany({ where: { id: { in: rows.map((r) => r.id) } }, data: { customPrice: true } })] : []),
+      ])
+    }
     const updated = rows.length
     await logActivity({
       type: "lot",
-      message: `Prix mis à jour sur ${updated} terrain${updated > 1 ? "s" : ""} (${mode === "perM2" ? `${value} / m²` : `${value}`})`,
+      message: `Prix mis à jour sur ${updated} terrain${updated > 1 ? "s" : ""} (${mode === "perM2" ? `${value} / m²` : `${value}`})${custom ? " — prix particuliers" : ""}`,
       actorId: admin.id,
     })
     revalidateLots()
@@ -295,36 +384,6 @@ export async function bulkDeleteLots(ids: string[]): Promise<ActionResult<{ dele
   })
 }
 
-/** Applique les modalités par défaut (paramètres) aux terrains qui n'en ont pas. */
-export async function applyDefaultPlanToLots(): Promise<ActionResult<{ updated: number }>> {
-  return run(async () => {
-    const admin = await assertAdmin("ADMIN")
-    const settings = await getSettings()
-    const lots = await db.lot.findMany({
-      where: { status: { in: ["AVAILABLE", "RESERVED"] }, price: { not: null }, depositAmount: null, installmentsCount: null, frequency: null },
-      select: { id: true, price: true },
-    })
-    if (lots.length > 0) {
-      await db.$transaction([
-        updateLotAmounts(
-          lots.map((lot) => ({
-            id: lot.id,
-            price: lot.price,
-            depositAmount: lot.price ? Math.min(lot.price, roundTo((lot.price * settings.defaultDepositRate) / 100, 1000)) : null,
-          })),
-        ),
-        db.lot.updateMany({
-          where: { id: { in: lots.map((lot) => lot.id) } },
-          data: { installmentsCount: settings.defaultInstallments, frequency: settings.defaultFrequency },
-        }),
-      ])
-    }
-    await logActivity({ type: "lot", message: `Modalités par défaut appliquées à ${lots.length} terrain${lots.length > 1 ? "s" : ""}`, actorId: admin.id })
-    revalidateLots()
-    return ok({ updated: lots.length }, lots.length ? `Modalités appliquées à ${lots.length} terrain${lots.length > 1 ? "s" : ""}` : "Tous les terrains ont déjà des modalités")
-  })
-}
-
 // ─────────────────────────────────────────────────────────────
 // Import Excel
 // ─────────────────────────────────────────────────────────────
@@ -356,10 +415,15 @@ export async function applyLotImport(rows: unknown[]): Promise<ActionResult<{ cr
   return run(async () => {
     const admin = await assertAdmin("ADMIN")
     const parsed = z.array(importRowSchema).max(5000).parse(rows)
-    const [existing, sales] = await Promise.all([
+    const [existing, sales, settings] = await Promise.all([
       db.lot.findMany({ select: { id: true, number: true, attributes: true } }),
       db.sale.findMany({ where: { status: { not: "CANCELLED" } }, select: { lotId: true } }),
+      getSettings(),
     ])
+    // Avec un prix du m² du site : un prix donné dans le fichier devient un prix particulier ; les autres terrains
+    // (nouveaux sans prix, surfaces modifiées) sont recalculés au prix du site à la fin de l'import.
+    const pricing = sitePricing(settings)
+    const customOf = (price: number | null | undefined) => (pricing.pricePerM2 != null && typeof price === "number" ? { customPrice: true } : {})
     const byNumber = new Map(existing.map((l) => [l.number.toLowerCase(), l]))
     const locked = new Set(sales.map((s) => s.lotId))
     const creates: Prisma.LotCreateManyInput[] = []
@@ -377,12 +441,13 @@ export async function applyLotImport(rows: unknown[]): Promise<ActionResult<{ cr
           where: { id: current.id },
           data: {
             ...rest,
+            ...customOf(rest.price),
             attributes: mergedAttributes as Prisma.InputJsonValue,
             ...(status && !locked.has(current.id) ? { status, ...(status !== "RESERVED" ? { reservedNote: null } : {}) } : {}),
           },
         })
       } else {
-        creates.push({ number, ...rest, attributes: attributes as Prisma.InputJsonValue, areaM2: rest.areaM2 ?? 0, status: status ?? "AVAILABLE" })
+        creates.push({ number, ...rest, ...customOf(rest.price), attributes: attributes as Prisma.InputJsonValue, areaM2: rest.areaM2 ?? 0, status: status ?? "AVAILABLE" })
       }
     }
     const created = creates.length
@@ -392,6 +457,7 @@ export async function applyLotImport(rows: unknown[]): Promise<ActionResult<{ cr
         // Créations en une seule requête ; les mises à jour (valeurs propres à chaque ligne) restent unitaires
         if (creates.length > 0) await tx.lot.createMany({ data: creates })
         for (const update of updates) await tx.lot.update(update)
+        await applySitePricing(pricing, { client: tx })
       },
       { timeout: 60_000 + updates.length * 500 },
     )

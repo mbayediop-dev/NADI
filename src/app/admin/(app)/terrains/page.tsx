@@ -4,9 +4,11 @@ import { hasRole, requireAdmin } from "@/lib/auth/admin"
 import { getSettings } from "@/lib/settings"
 import { getAdminLots, getLotSuggestions } from "@/lib/queries/lots"
 import { formatArea, formatMoneyCompact, formatNumber, formatPercent } from "@/lib/format"
+import { sitePricing } from "@/lib/lot-pricing"
 import { PageHeader } from "@/components/admin/page-header"
 import { Skeleton } from "@/components/ui/skeleton"
 import { LotsTable } from "@/components/admin/lots/lots-table"
+import { SiteTermsCard } from "@/components/admin/lots/site-terms"
 
 export const metadata: Metadata = { title: "Terrains" }
 
@@ -34,6 +36,7 @@ async function LotsContent() {
   const priced = forSale.filter((r) => r.pricePerM2)
   const avgM2 = priced.length ? priced.reduce((s, r) => s + (r.pricePerM2 ?? 0), 0) / priced.length : null
   const sold = rows.filter((r) => r.status === "SOLD").length
+  const pricing = sitePricing(settings)
 
   return (
     <div className="space-y-6">
@@ -43,12 +46,24 @@ async function LotsContent() {
         <Kpi label="Stock disponible" value={formatMoneyCompact(stock, settings.currencyLabel)} hint="Valeur des lots disponibles" />
         <Kpi label="Prix moyen au m²" value={avgM2 ? `${formatNumber(avgM2)} ${settings.currencyLabel}` : "—"} hint="Sur les lots commercialisables" />
       </div>
+      <SiteTermsCard
+        terms={{
+          pricing,
+          depositRate: settings.defaultDepositRate,
+          installments: settings.defaultInstallments,
+          frequency: settings.defaultFrequency,
+        }}
+        lots={rows.map((r) => ({ id: r.id, number: r.number, areaM2: r.areaM2, price: r.price, status: r.status, customPrice: r.customPrice, hasOwnPlan: r.hasOwnPlan }))}
+        currency={settings.currencyLabel}
+        canEdit={hasRole(admin, "ADMIN")}
+      />
       <LotsTable
         rows={rows}
         currency={settings.currencyLabel}
         blocks={suggestions.blocks}
         soilTypes={suggestions.soilTypes}
         canEdit={hasRole(admin, "ADMIN")}
+        sitePricing={pricing}
       />
     </div>
   )
@@ -72,6 +87,7 @@ function LotsSkeleton() {
           <Skeleton key={i} className="h-24 rounded-2xl" />
         ))}
       </div>
+      <Skeleton className="h-44 rounded-2xl" />
       <div className="flex gap-2">
         {Array.from({ length: 5 }).map((_, i) => (
           <Skeleton key={i} className="h-8 w-28 rounded-full" />

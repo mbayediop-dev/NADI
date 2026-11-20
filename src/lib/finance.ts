@@ -31,7 +31,7 @@ export function addPeriods(date: Date, frequency: PaymentFrequency, count: numbe
   }
 }
 
-const MONTHS_PER_PERIOD: Partial<Record<PaymentFrequency, number>> = {
+export const MONTHS_PER_PERIOD: Partial<Record<PaymentFrequency, number>> = {
   MONTHLY: 1,
   BIMONTHLY: 2,
   QUARTERLY: 3,

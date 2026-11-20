@@ -116,6 +116,15 @@ async function LotDetail({ params }: { params: PageProps<"/admin/terrains/[id]">
                   {formatNumber(lot.price / lot.areaM2)} {currency} / m²
                 </p>
               )}
+              {settings.lotPricePerM2 != null && lot.status !== "SOLD" && (
+                <p className="pb-1 text-xs text-muted-foreground">
+                  {lot.customPrice ? (
+                    <span className="font-semibold text-gold-strong">Prix particulier</span>
+                  ) : (
+                    <>Prix du site : {formatNumber(settings.lotPricePerM2)} {currency} / m², mis à jour automatiquement</>
+                  )}
+                </p>
+              )}
             </div>
             {plan ? <PaymentPlanSummary plan={plan} currency={currency} /> : <p className="text-sm text-muted-foreground">Renseignez un prix pour définir les modalités.</p>}
           </Card>

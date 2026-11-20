@@ -15,7 +15,8 @@ import { env } from "@/lib/env"
  */
 
 export type StoredObject = { key: string; size: number; contentType: string }
-export type ObjectStream = { body: ReadableStream; size: number; contentType: string; range?: { start: number; end: number } }
+/** `size` : taille totale en octets, `null` si le stockage ne l'a pas indiquée (réponse alors envoyée sans Content-Length). */
+export type ObjectStream = { body: ReadableStream; size: number | null; contentType: string; range?: { start: number; end: number } }
 
 const MIME_BY_EXT: Record<string, string> = {
   ".jpg": "image/jpeg",
@@ -193,13 +194,16 @@ export async function deleteObject(key: string | null | undefined) {
 export async function getObject(key: string, rangeHeader?: string | null): Promise<ObjectStream | null> {
   const contentType = guessMime(key)
   if (env.storageDriver === "supabase") {
+    // Sans « identity », Supabase compresse les fichiers texte (SVG…) sans Content-Length : fetch les décompresse
+    // et la taille serait inconnue (un Content-Length: 0 renvoyé ensuite viderait la réponse).
     const res = await supabaseFetch(`/object/authenticated/${supabaseConfig().bucket}/${objectPath(key)}`, {
-      headers: rangeHeader ? { Range: rangeHeader } : undefined,
+      headers: { "Accept-Encoding": "identity", ...(rangeHeader ? { Range: rangeHeader } : {}) },
     })
     if (!res.ok || !res.body) return null
     const contentRange = res.headers.get("content-range")
     let range: ObjectStream["range"]
-    let size = Number(res.headers.get("content-length") ?? 0)
+    const length = res.headers.get("content-length")
+    let size = length && !res.headers.has("content-encoding") ? Number(length) : null
     if (res.status === 206 && contentRange) {
       const [span, total] = contentRange.replace(/^bytes /, "").split("/")
       const [start, end] = span.split("-").map(Number)
@@ -270,10 +274,10 @@ export function objectResponse(object: ObjectStream, opts: { filename?: string; 
     )
   }
   if (object.range) {
-    headers.set("Content-Range", `bytes ${object.range.start}-${object.range.end}/${object.size}`)
+    headers.set("Content-Range", `bytes ${object.range.start}-${object.range.end}/${object.size ?? "*"}`)
     headers.set("Content-Length", String(object.range.end - object.range.start + 1))
     return new Response(object.body, { status: 206, headers })
   }
-  headers.set("Content-Length", String(object.size))
+  if (object.size != null) headers.set("Content-Length", String(object.size))
   return new Response(object.body, { status: 200, headers })
 }

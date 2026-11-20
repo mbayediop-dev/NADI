@@ -1,13 +1,13 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { ArrowDown, ArrowUp, Building2, Coins, Globe2, Images, LayoutTemplate, MapPin, Plus, Scale, Share2, Sparkles, Trash2 } from "lucide-react"
 import type { PaymentFrequency } from "@/generated/prisma/enums"
 import { resolvePlan } from "@/lib/finance"
 import { formatMoney } from "@/lib/format"
 import { useServerAction } from "@/hooks/use-server-action"
 import { saveCommercialSettings, saveCompanySettings, saveSiteSettings } from "@/app/admin/(app)/parametres/actions"
-import { applyDefaultPlanToLots } from "@/app/admin/(app)/terrains/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
@@ -443,18 +443,16 @@ export function CommercialForm({ initial, canEdit, lotsWithoutPlan }: { initial:
               )}
             </p>
           )}
-          {canEdit && (
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed p-3">
-              <p className="text-sm text-muted-foreground">
-                {lotsWithoutPlan > 0
-                  ? `${lotsWithoutPlan} terrain${lotsWithoutPlan > 1 ? "s" : ""} suit${lotsWithoutPlan > 1 ? "vent" : ""} ces valeurs par défaut. Vous pouvez les figer sur chaque terrain.`
-                  : "Tous les terrains ont leurs propres modalités."}
-              </p>
-              <Button type="button" variant="outline" size="sm" disabled={pending || lotsWithoutPlan === 0 || form.dirty} onClick={() => run(() => applyDefaultPlanToLots())}>
-                Appliquer aux terrains sans modalités
-              </Button>
-            </div>
-          )}
+          <p className="mt-4 rounded-xl border border-dashed p-3 text-sm text-muted-foreground">
+            {lotsWithoutPlan > 0
+              ? `${lotsWithoutPlan} terrain${lotsWithoutPlan > 1 ? "s" : ""} sui${lotsWithoutPlan > 1 ? "vent" : "t"} ces valeurs : tout changement s'y applique automatiquement. `
+              : "Tous les terrains ont leurs propres modalités. "}
+            Également modifiables, avec le prix du m², dans{" "}
+            <Link href="/admin/terrains" className="text-primary underline underline-offset-2">
+              Terrains → Conditions de vente du site
+            </Link>
+            .
+          </p>
         </FormSection>
       </fieldset>
       {canEdit && <SaveBar dirty={form.dirty} pending={pending} onReset={form.reset} />}

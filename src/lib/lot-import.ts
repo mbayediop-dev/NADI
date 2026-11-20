@@ -28,6 +28,8 @@ export const lotSchema = z
     frontageM: optNumber,
     depthM: optNumber,
     price: optNumber,
+    // Prix particulier : le terrain ne suit pas le prix du m² du site
+    customPrice: z.boolean().default(false),
     depositAmount: optNumber,
     installmentsCount: z
       .number()

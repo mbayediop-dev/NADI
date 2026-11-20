@@ -10,6 +10,7 @@ import { formatArea, formatDate, formatMoney, formatNumber } from "@/lib/format"
 import { LOT_STATUS } from "@/lib/labels"
 import { cn } from "@/lib/utils"
 import type { LotInput } from "@/lib/lot-import"
+import { roundingLabel, siteLotPrice, type SitePricing } from "@/lib/lot-pricing"
 import { useServerAction } from "@/hooks/use-server-action"
 import { createLot, updateLot } from "@/app/admin/(app)/terrains/actions"
 import { Button } from "@/components/ui/button"
@@ -34,6 +35,8 @@ export type LotFormInitial = {
   frontageM: number | null
   depthM: number | null
   price: number | null
+  /** Prix particulier : ne suit pas le prix du m² du site */
+  customPrice: boolean
   depositAmount: number | null
   installmentsCount: number | null
   frequency: PaymentFrequency | null
@@ -55,6 +58,8 @@ type Props = {
   fields: LotFieldDef[]
   suggestions: { soilTypes: string[]; blocks: string[]; orientations: string[]; features: string[] }
   defaults: PlanDefaults
+  /** Prix du m² du site (Settings.lotPricePerM2) */
+  sitePricing: SitePricing
   currency: string
   /** Vente en cours sur ce terrain (statut verrouillé) */
   sale?: { id: string; reference: string; buyerName: string } | null
@@ -76,7 +81,7 @@ function NumberInput({ value, onChange, id, placeholder, suffix }: { value: numb
   )
 }
 
-export function LotForm({ initial, fields, suggestions, defaults, currency, sale }: Props) {
+export function LotForm({ initial, fields, suggestions, defaults, sitePricing, currency, sale }: Props) {
   const router = useRouter()
   const { run, pending } = useServerAction()
   // Création : modalités par défaut pré-remplies
@@ -92,11 +97,17 @@ export function LotForm({ initial, fields, suggestions, defaults, currency, sale
 
   const set = <K extends keyof LotFormInitial>(key: K, value: LotFormInitial[K]) => setV((prev) => ({ ...prev, [key]: value }))
 
+  // Prix du site : surface × prix du m² (un terrain vendu garde son prix, fixé par la vente)
+  const pricingActive = sitePricing.pricePerM2 != null
+  const followsSite = pricingActive && !v.customPrice
+  const sold = !!sale || initial.status === "SOLD"
+  const price = followsSite ? (sold ? initial.price : siteLotPrice(v.areaM2, sitePricing)) : v.price
+
   const planSource = useDefaults
-    ? { price: v.price, depositAmount: null, installmentsCount: null, frequency: null, customIntervalDays: null, installmentAmount: null }
-    : v
+    ? { price, depositAmount: null, installmentsCount: null, frequency: null, customIntervalDays: null, installmentAmount: null }
+    : { ...v, price }
   const plan = resolvePlan(planSource, defaults)
-  const pricePerM2 = v.price && v.areaM2 ? v.price / v.areaM2 : null
+  const pricePerM2 = price && v.areaM2 ? price / v.areaM2 : null
   const preview =
     plan && today
       ? buildSchedule({
@@ -118,7 +129,8 @@ export function LotForm({ initial, fields, suggestions, defaults, currency, sale
       areaM2: v.areaM2 ?? Number.NaN,
       frontageM: v.frontageM,
       depthM: v.depthM,
-      price: v.price,
+      price,
+      customPrice: v.customPrice,
       depositAmount: useDefaults ? null : v.depositAmount,
       installmentsCount: useDefaults ? null : v.installmentsCount,
       frequency: useDefaults ? null : v.frequency,
@@ -185,32 +197,76 @@ export function LotForm({ initial, fields, suggestions, defaults, currency, sale
         </FormSection>
 
         <FormSection title="Prix et modalités de paiement" description="Ce que l'acheteur verra sur le site : prix, acompte et versements." icon={Coins}>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <FormField
-              label="Prix du terrain"
-              htmlFor="price"
-              error={errors.price}
-              hint={pricePerM2 ? `Soit ${formatNumber(pricePerM2)} ${currency} / m²` : "Laissez vide pour « Prix sur demande »"}
-            >
-              <MoneyInput id="price" className="h-9" value={v.price} onChange={(n) => set("price", n)} suffix={currency} />
-            </FormField>
-            <FormField label="Prix au m² (calcul rapide)" htmlFor="ppm2" hint="Renseigne le prix à partir de la superficie.">
-              <MoneyInput
-                id="ppm2"
-                className="h-9"
-                value={pricePerM2 ? Math.round(pricePerM2) : null}
-                onChange={(n) => v.areaM2 && set("price", n ? Math.round((n * v.areaM2) / 1000) * 1000 : null)}
-                suffix={`${currency}/m²`}
-                disabled={!v.areaM2}
-              />
-            </FormField>
-          </div>
+          {pricingActive && (
+            <div className="mb-4 grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Mode de prix">
+              {(
+                [
+                  { custom: false, title: "Prix du site", text: `${formatNumber(sitePricing.pricePerM2)} ${currency} / m² × surface, mis à jour automatiquement` },
+                  { custom: true, title: "Prix particulier", text: "Montant fixé pour ce terrain (angle, emplacement…)" },
+                ] as const
+              ).map((o) => (
+                <button
+                  key={o.title}
+                  type="button"
+                  role="radio"
+                  aria-checked={v.customPrice === o.custom}
+                  onClick={() =>
+                    setV((prev) => ({
+                      ...prev,
+                      customPrice: o.custom,
+                      // On part du prix affiché pour saisir un prix particulier
+                      ...(o.custom && prev.customPrice !== o.custom ? { price: price ?? prev.price } : {}),
+                    }))
+                  }
+                  className={cn(
+                    "rounded-xl border p-3 text-left transition-all",
+                    v.customPrice === o.custom ? "border-primary bg-primary/5 ring-1 ring-primary" : "hover:bg-muted/50",
+                  )}
+                >
+                  <span className="block text-sm font-semibold">{o.title}</span>
+                  <span className="text-xs text-muted-foreground">{o.text}</span>
+                </button>
+              ))}
+            </div>
+          )}
+          {followsSite ? (
+            <div className="rounded-xl border bg-muted/30 p-3">
+              <p className="text-xs text-muted-foreground">Prix du terrain</p>
+              <p className="text-2xl font-bold tracking-tight tabular">{price ? formatMoney(price, currency) : "Renseignez la superficie"}</p>
+              <p className="text-xs text-muted-foreground">
+                {sold
+                  ? "Terrain vendu : le prix convenu est celui de la vente, il n'est plus recalculé."
+                  : `${v.areaM2 ? formatArea(v.areaM2) : "Superficie"} × ${formatNumber(sitePricing.pricePerM2)} ${currency} / m², arrondi ${roundingLabel(sitePricing.rounding)}. Suit les changements du prix du m² du site.`}
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                label="Prix du terrain"
+                htmlFor="price"
+                error={errors.price}
+                hint={pricePerM2 ? `Soit ${formatNumber(pricePerM2)} ${currency} / m²` : "Laissez vide pour « Prix sur demande »"}
+              >
+                <MoneyInput id="price" className="h-9" value={v.price} onChange={(n) => set("price", n)} suffix={currency} />
+              </FormField>
+              <FormField label="Prix au m² (calcul rapide)" htmlFor="ppm2" hint="Renseigne le prix à partir de la superficie.">
+                <MoneyInput
+                  id="ppm2"
+                  className="h-9"
+                  value={pricePerM2 ? Math.round(pricePerM2) : null}
+                  onChange={(n) => v.areaM2 && set("price", n ? Math.round((n * v.areaM2) / 1000) * 1000 : null)}
+                  suffix={`${currency}/m²`}
+                  disabled={!v.areaM2}
+                />
+              </FormField>
+            </div>
+          )}
 
           <div className="mt-5 flex items-center justify-between gap-4 rounded-xl border bg-muted/30 p-3">
             <div>
               <p className="text-sm font-semibold">Utiliser les modalités par défaut</p>
               <p className="text-xs text-muted-foreground">
-                {defaults.defaultDepositRate} % d&apos;acompte puis {defaults.defaultInstallments} versements — modifiables dans les paramètres.
+                {defaults.defaultDepositRate} % de caution puis {defaults.defaultInstallments} versements — conditions de vente du site (page Terrains), appliquées automatiquement.
               </p>
             </div>
             <Switch
@@ -220,7 +276,7 @@ export function LotForm({ initial, fields, suggestions, defaults, currency, sale
                 if (!checked)
                   setV((prev) => ({
                     ...prev,
-                    depositAmount: prev.depositAmount ?? (prev.price ? Math.round((prev.price * defaults.defaultDepositRate) / 100 / 1000) * 1000 : null),
+                    depositAmount: prev.depositAmount ?? (price ? Math.round((price * defaults.defaultDepositRate) / 100 / 1000) * 1000 : null),
                     installmentsCount: prev.installmentsCount ?? defaults.defaultInstallments,
                     frequency: prev.frequency ?? defaults.defaultFrequency,
                   }))
@@ -236,7 +292,7 @@ export function LotForm({ initial, fields, suggestions, defaults, currency, sale
                   label="Acompte"
                   htmlFor="deposit"
                   error={errors.depositAmount}
-                  hint={v.price && v.depositAmount != null ? `${formatNumber((v.depositAmount / v.price) * 100)} % du prix` : "0 = sans acompte"}
+                  hint={price && v.depositAmount != null ? `${formatNumber((v.depositAmount / price) * 100)} % du prix` : "0 = sans acompte"}
                 >
                   <MoneyInput id="deposit" className="h-9" value={v.depositAmount} onChange={(n) => set("depositAmount", n)} suffix={currency} />
                 </FormField>
@@ -246,8 +302,8 @@ export function LotForm({ initial, fields, suggestions, defaults, currency, sale
                       <button
                         key={p}
                         type="button"
-                        disabled={!v.price}
-                        onClick={() => set("depositAmount", v.price ? Math.round((v.price * p) / 100 / 1000) * 1000 : 0)}
+                        disabled={!price}
+                        onClick={() => set("depositAmount", price ? Math.round((price * p) / 100 / 1000) * 1000 : 0)}
                         className="h-8 rounded-lg border px-2.5 text-xs font-semibold transition-colors hover:border-primary hover:bg-primary/5 disabled:opacity-40"
                       >
                         {p === 0 ? "Aucun" : `${p} %`}
@@ -425,7 +481,7 @@ export function LotForm({ initial, fields, suggestions, defaults, currency, sale
               </div>
               {!sale && <LotStatusBadge status={v.status} className="bg-white/95" />}
             </div>
-            <p className="mt-4 text-3xl font-extrabold tracking-tight tabular">{v.price ? formatMoney(v.price, currency) : "Prix sur demande"}</p>
+            <p className="mt-4 text-3xl font-extrabold tracking-tight tabular">{price ? formatMoney(price, currency) : "Prix sur demande"}</p>
             {pricePerM2 && <p className="text-sm text-white/70 tabular">{formatNumber(pricePerM2)} {currency} / m²</p>}
           </div>
           <div className="space-y-4 p-4">

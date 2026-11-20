@@ -30,6 +30,7 @@ export async function getAdminLots(settings: AppSettings) {
         areaM2: lot.areaM2,
         price: lot.price,
         pricePerM2: lot.price && lot.areaM2 ? lot.price / lot.areaM2 : null,
+        customPrice: lot.customPrice,
         status: lot.status,
         depositAmount: lot.depositAmount,
         installmentsCount: lot.installmentsCount,

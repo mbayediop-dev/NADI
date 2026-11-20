@@ -10,7 +10,10 @@ import { fail, ok, run, UserError, type ActionResult } from "@/lib/action"
 import { logActivity } from "@/lib/activity"
 import { buildSchedule, summarizeSale, toDueDate } from "@/lib/finance"
 import { formatMoney, fullName } from "@/lib/format"
+import { sitePricing } from "@/lib/lot-pricing"
+import { applySitePricing } from "@/lib/lot-prices"
 import { normalizePhone } from "@/lib/phone"
+import { getSettings } from "@/lib/settings"
 import { nextReceiptNumber, nextSaleReference } from "@/lib/sequences"
 import { sendPaymentConfirmation, sendReminder, sendWelcomeSms } from "@/lib/notifications"
 
@@ -403,13 +406,18 @@ export async function cancelSale(saleId: string, reason: string): Promise<Action
   return run(async () => {
     const admin = await assertAdmin("ADMIN")
     const cleanReason = z.string().trim().min(3, "Indiquez le motif de l'annulation").max(500).parse(reason)
+    const pricing = sitePricing(await getSettings())
     const sale = await db.$transaction(async (tx) => {
       const sale = await tx.sale.findUnique({ where: { id: saleId }, include: { lot: true, buyer: true } })
       if (!sale) throw new UserError("Vente introuvable")
       if (sale.status === "CANCELLED") throw new UserError("Cette vente est déjà annulée.")
       await tx.sale.update({ where: { id: saleId }, data: { status: "CANCELLED", cancelledAt: new Date(), cancelReason: cleanReason } })
       const other = await tx.sale.count({ where: { lotId: sale.lotId, id: { not: saleId }, status: { in: ["ACTIVE", "COMPLETED"] } } })
-      if (other === 0 && sale.lot.status === "SOLD") await tx.lot.update({ where: { id: sale.lotId }, data: { status: "AVAILABLE" } })
+      if (other === 0 && sale.lot.status === "SOLD") {
+        await tx.lot.update({ where: { id: sale.lotId }, data: { status: "AVAILABLE" } })
+        // De nouveau en vente : il reprend le prix du site s'il le suit (le prix du m² a pu changer entre-temps)
+        await applySitePricing(pricing, { lotIds: [sale.lotId], client: tx })
+      }
       return sale
     })
     await logActivity({

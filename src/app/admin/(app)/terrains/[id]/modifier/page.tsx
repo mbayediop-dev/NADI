@@ -5,6 +5,7 @@ import { db } from "@/lib/db"
 import { requireAdmin } from "@/lib/auth/admin"
 import { fullName } from "@/lib/format"
 import { getSettings, planDefaults } from "@/lib/settings"
+import { sitePricing } from "@/lib/lot-pricing"
 import { getLotFields, getLotSuggestions } from "@/lib/queries/lots"
 import { PageHeader } from "@/components/admin/page-header"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -53,6 +54,7 @@ async function EditLotContent({ params }: { params: PageProps<"/admin/terrains/[
           frontageM: lot.frontageM,
           depthM: lot.depthM,
           price: lot.price,
+          customPrice: lot.customPrice,
           depositAmount: lot.depositAmount,
           installmentsCount: lot.installmentsCount,
           frequency: lot.frequency,
@@ -71,6 +73,7 @@ async function EditLotContent({ params }: { params: PageProps<"/admin/terrains/[
         fields={fields}
         suggestions={suggestions}
         defaults={planDefaults(settings)}
+        sitePricing={sitePricing(settings)}
         currency={settings.currencyLabel}
         sale={sale ? { id: sale.id, reference: sale.reference, buyerName: fullName(sale.buyer) } : null}
       />

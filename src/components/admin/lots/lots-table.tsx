@@ -17,7 +17,6 @@ import {
   Plus,
   Repeat,
   Shapes,
-  Sparkles,
   Star,
   Trash2,
   Upload,
@@ -28,8 +27,7 @@ import { formatArea, formatMoney, formatNumber } from "@/lib/format"
 import { LOT_STATUS, LOT_STATUS_ORDER } from "@/lib/labels"
 import { cn } from "@/lib/utils"
 import type { AdminLotRow } from "@/lib/queries/lots"
-import { useServerAction } from "@/hooks/use-server-action"
-import { applyDefaultPlanToLots } from "@/app/admin/(app)/terrains/actions"
+import type { SitePricing } from "@/lib/lot-pricing"
 import { DataTable, SortHeader } from "@/components/shared/data-table"
 import { LotStatusBadge } from "@/components/shared/badges"
 import { Button } from "@/components/ui/button"
@@ -51,14 +49,16 @@ type Props = {
   blocks: string[]
   soilTypes: string[]
   canEdit: boolean
+  /** Prix du m² du site : les terrains à prix particulier sont signalés */
+  sitePricing: SitePricing
 }
 
-export function LotsTable({ rows, currency, blocks, soilTypes, canEdit }: Props) {
+export function LotsTable({ rows, currency, blocks, soilTypes, canEdit, sitePricing }: Props) {
+  const pricingActive = sitePricing.pricePerM2 != null
   const [status, setStatus] = React.useState<LotStatus | "ALL">("ALL")
   const [block, setBlock] = React.useState("ALL")
   const [noGeometry, setNoGeometry] = React.useState(false)
   const [bulk, setBulk] = React.useState<{ kind: BulkKind; rows: AdminLotRow[]; clear: () => void } | null>(null)
-  const { run, pending } = useServerAction()
 
   const counts = React.useMemo(() => {
     const c: Record<string, number> = { ALL: rows.length }
@@ -66,7 +66,6 @@ export function LotsTable({ rows, currency, blocks, soilTypes, canEdit }: Props)
     return c
   }, [rows])
   const missingGeometry = rows.filter((r) => !r.hasGeometry).length
-  const withoutPlan = rows.filter((r) => !r.hasOwnPlan && r.price && (r.status === "AVAILABLE" || r.status === "RESERVED")).length
 
   const data = React.useMemo(
     () => rows.filter((r) => (status === "ALL" || r.status === status) && (block === "ALL" || r.block === block) && (!noGeometry || !r.hasGeometry)),
@@ -105,7 +104,17 @@ export function LotsTable({ rows, currency, blocks, soilTypes, canEdit }: Props)
           row.original.price ? (
             <div className="leading-tight">
               <p className="font-semibold tabular">{formatMoney(row.original.price, currency)}</p>
-              <p className="text-xs text-muted-foreground tabular">{formatNumber(row.original.pricePerM2)} /m²</p>
+              <p className="text-xs text-muted-foreground tabular">
+                {formatNumber(row.original.pricePerM2)} /m²
+                {pricingActive && row.original.customPrice && row.original.status !== "SOLD" && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="ml-1 font-semibold text-gold-strong">· particulier</span>
+                    </TooltipTrigger>
+                    <TooltipContent>Prix particulier : ne suit pas le prix du m² du site</TooltipContent>
+                  </Tooltip>
+                )}
+              </p>
             </div>
           ) : (
             <span className="text-xs text-muted-foreground">Non défini</span>
@@ -253,7 +262,7 @@ export function LotsTable({ rows, currency, blocks, soilTypes, canEdit }: Props)
         ),
       },
     ],
-    [currency, canEdit],
+    [currency, canEdit, pricingActive],
   )
 
   const BulkDialog = bulk ? BULK_DIALOGS[bulk.kind] : null
@@ -279,7 +288,7 @@ export function LotsTable({ rows, currency, blocks, soilTypes, canEdit }: Props)
         ))}
       </div>
 
-      {canEdit && (missingGeometry > 0 || withoutPlan > 0) && (
+      {canEdit && missingGeometry > 0 && (
         <div className="flex flex-col gap-2 md:flex-row">
           {missingGeometry > 0 && (
             <div className="flex flex-1 items-center gap-3 rounded-xl border border-dashed bg-card px-4 py-3 text-sm">
@@ -289,17 +298,6 @@ export function LotsTable({ rows, currency, blocks, soilTypes, canEdit }: Props)
               </span>
               <Button variant="outline" size="sm" asChild>
                 <Link href="/admin/plan?edit=1">Dessiner</Link>
-              </Button>
-            </div>
-          )}
-          {withoutPlan > 0 && (
-            <div className="flex flex-1 items-center gap-3 rounded-xl border border-dashed bg-card px-4 py-3 text-sm">
-              <Sparkles className="size-4 shrink-0 text-gold-strong" />
-              <span className="flex-1">
-                <strong>{withoutPlan}</strong> terrain{withoutPlan > 1 ? "s" : ""} utilise{withoutPlan > 1 ? "nt" : ""} les modalités par défaut.
-              </span>
-              <Button variant="outline" size="sm" disabled={pending} onClick={() => run(() => applyDefaultPlanToLots())}>
-                Les figer
               </Button>
             </div>
           )}
@@ -408,6 +406,7 @@ export function LotsTable({ rows, currency, blocks, soilTypes, canEdit }: Props)
           rows={bulk.rows}
           currency={currency}
           soilTypes={soilTypes}
+          sitePricing={sitePricing}
           onDone={bulk.clear}
           onOpenChange={(open) => !open && setBulk(null)}
         />

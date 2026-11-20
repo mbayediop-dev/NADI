@@ -8,6 +8,7 @@ import { LOT_STATUS } from "@/lib/labels"
 import { cn } from "@/lib/utils"
 import { useServerAction } from "@/hooks/use-server-action"
 import type { AdminLotRow } from "@/lib/queries/lots"
+import { PRICE_ROUNDINGS, roundTo, siteLotPrice, type SitePricing } from "@/lib/lot-pricing"
 import {
   bulkDeleteLots,
   bulkSetDeposit,
@@ -15,6 +16,7 @@ import {
   bulkSetPrice,
   bulkSetSoilType,
   bulkSetStatus,
+  bulkUseSitePrice,
 } from "@/app/admin/(app)/terrains/actions"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -33,19 +35,12 @@ type DialogProps = {
   rows: AdminLotRow[]
   currency: string
   soilTypes: string[]
+  sitePricing: SitePricing
   onDone: () => void
   onOpenChange: (open: boolean) => void
 }
 
-const ROUNDINGS = [
-  { value: "1", label: "Aucun arrondi" },
-  { value: "1000", label: "Au millier (1 000)" },
-  { value: "10000", label: "À 10 000" },
-  { value: "50000", label: "À 50 000" },
-  { value: "100000", label: "À 100 000" },
-]
-
-const roundTo = (v: number, step: number) => Math.round(v / step) * step
+const ROUNDINGS = PRICE_ROUNDINGS.map((r) => ({ value: String(r.value), label: r.label }))
 
 function Segmented<T extends string>({ value, onChange, options }: { value: T; onChange: (v: T) => void; options: { value: T; label: string }[] }) {
   return (
@@ -136,68 +131,85 @@ function Shell({
 
 const plural = (n: number) => `${formatNumber(n)} terrain${n > 1 ? "s" : ""}`
 
-export function BulkPriceDialog({ rows, currency, onDone, onOpenChange }: DialogProps) {
+export function BulkPriceDialog({ rows, currency, sitePricing, onDone, onOpenChange }: DialogProps) {
   const { run, pending } = useServerAction()
-  const [mode, setMode] = React.useState<"fixed" | "perM2">("perM2")
+  const pricingActive = sitePricing.pricePerM2 != null
+  const [mode, setMode] = React.useState<"site" | "fixed" | "perM2">("perM2")
   const [value, setValue] = React.useState<number | null>(null)
   const [rounding, setRounding] = React.useState("50000")
   const [adjustDeposit, setAdjustDeposit] = React.useState(true)
   const editable = rows.filter((r) => r.status !== "SOLD")
   const sold = rows.length - editable.length
-  const compute = (r: AdminLotRow) => (value ? roundTo(mode === "fixed" ? value : value * r.areaM2, Number(rounding)) : null)
+  const compute = (r: AdminLotRow) =>
+    mode === "site" ? siteLotPrice(r.areaM2, sitePricing) : value ? roundTo(mode === "fixed" ? value : value * r.areaM2, Number(rounding)) : null
   const total = editable.reduce((s, r) => s + (compute(r) ?? 0), 0)
+  const onSuccess = () => {
+    onDone()
+    onOpenChange(false)
+  }
 
   return (
     <Shell
       title="Définir le prix"
       description={`${plural(editable.length)} concerné${editable.length > 1 ? "s" : ""}${sold ? ` · ${sold} vendu${sold > 1 ? "s" : ""} ignoré${sold > 1 ? "s" : ""}` : ""}`}
       pending={pending}
-      disabled={!value || editable.length === 0}
+      disabled={(mode !== "site" && !value) || editable.length === 0}
       onOpenChange={onOpenChange}
       onSubmit={() =>
-        run(() => bulkSetPrice(rows.map((r) => r.id), { mode, value: value ?? 0, rounding: Number(rounding) as 1000, adjustDeposit }), {
-          onSuccess: () => {
-            onDone()
-            onOpenChange(false)
-          },
-        })
+        mode === "site"
+          ? run(() => bulkUseSitePrice(rows.map((r) => r.id)), { onSuccess })
+          : run(() => bulkSetPrice(rows.map((r) => r.id), { mode, value: value ?? 0, rounding: Number(rounding) as 1000, adjustDeposit }), { onSuccess })
       }
     >
       <Segmented
         value={mode}
         onChange={setMode}
         options={[
+          ...(pricingActive ? [{ value: "site" as const, label: "Prix du site" }] : []),
           { value: "perM2", label: "Prix au m²" },
           { value: "fixed", label: "Montant fixe" },
         ]}
       />
-      <div className="grid gap-4 sm:grid-cols-2">
-        <FormField label={mode === "perM2" ? "Prix au m²" : "Prix du terrain"} htmlFor="bulk-price">
-          <MoneyInput id="bulk-price" autoFocus value={value} onChange={setValue} suffix={mode === "perM2" ? `${currency}/m²` : currency} className="h-9" />
-        </FormField>
-        <FormField label="Arrondi" htmlFor="bulk-round">
-          <Select value={rounding} onValueChange={setRounding}>
-            <SelectTrigger id="bulk-round" className="h-9 w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {ROUNDINGS.map((r) => (
-                <SelectItem key={r.value} value={r.value}>
-                  {r.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </FormField>
-      </div>
-      <label className="flex items-start gap-2.5 rounded-xl border p-3 text-sm">
-        <Checkbox checked={adjustDeposit} onCheckedChange={(v) => setAdjustDeposit(!!v)} className="mt-0.5" />
-        <span>
-          <span className="font-medium">Recalculer l&apos;acompte</span>
-          <span className="block text-xs text-muted-foreground">Conserve le même pourcentage du prix (ou le taux par défaut).</span>
-        </span>
-      </label>
-      {value ? (
+      {mode === "site" ? (
+        <p className="rounded-xl border bg-muted/30 p-3 text-sm text-muted-foreground">
+          Ces terrains suivront de nouveau le prix du m² du site ({formatMoney(sitePricing.pricePerM2, currency)} / m²) : leur prix particulier est retiré.
+        </p>
+      ) : (
+        <>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <FormField label={mode === "perM2" ? "Prix au m²" : "Prix du terrain"} htmlFor="bulk-price">
+              <MoneyInput id="bulk-price" autoFocus value={value} onChange={setValue} suffix={mode === "perM2" ? `${currency}/m²` : currency} className="h-9" />
+            </FormField>
+            <FormField label="Arrondi" htmlFor="bulk-round">
+              <Select value={rounding} onValueChange={setRounding}>
+                <SelectTrigger id="bulk-round" className="h-9 w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROUNDINGS.map((r) => (
+                    <SelectItem key={r.value} value={r.value}>
+                      {r.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormField>
+          </div>
+          <label className="flex items-start gap-2.5 rounded-xl border p-3 text-sm">
+            <Checkbox checked={adjustDeposit} onCheckedChange={(v) => setAdjustDeposit(!!v)} className="mt-0.5" />
+            <span>
+              <span className="font-medium">Recalculer l&apos;acompte</span>
+              <span className="block text-xs text-muted-foreground">Conserve le même pourcentage du prix (ou le taux par défaut).</span>
+            </span>
+          </label>
+          {pricingActive && (
+            <p className="text-xs text-muted-foreground">
+              Le site a un prix du m² : ces terrains auront un <strong className="text-foreground">prix particulier</strong> et ne suivront plus ses changements.
+            </p>
+          )}
+        </>
+      )}
+      {mode === "site" || value ? (
         <>
           <Preview
             items={editable.slice(0, 30).map((r) => ({

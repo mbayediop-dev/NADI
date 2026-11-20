@@ -2,6 +2,7 @@ import { Suspense } from "react"
 import type { Metadata } from "next"
 import { requireAdmin } from "@/lib/auth/admin"
 import { getSettings, planDefaults } from "@/lib/settings"
+import { sitePricing } from "@/lib/lot-pricing"
 import { getLotFields, getLotSuggestions } from "@/lib/queries/lots"
 import { PageHeader } from "@/components/admin/page-header"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -32,6 +33,7 @@ async function NewLotContent() {
         frontageM: null,
         depthM: null,
         price: null,
+        customPrice: false,
         depositAmount: null,
         installmentsCount: null,
         frequency: null,
@@ -50,6 +52,7 @@ async function NewLotContent() {
       fields={fields}
       suggestions={suggestions}
       defaults={planDefaults(settings)}
+        sitePricing={sitePricing(settings)}
       currency={settings.currencyLabel}
     />
   )

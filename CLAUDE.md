@@ -25,7 +25,9 @@ npm run typecheck      # tsc --noEmit
 npm run db:migrate     # nouvelle migration Prisma
 npm run db:deploy      # applique les migrations en attente — À LANCER AVANT DE POUSSER : la production (Vercel) se redéploie à chaque push et partage cette base
 npm run db:seed        # ⚠️ réinitialise la base avec les données de démo
-npm run plan:generate  # régénère public/plan/site-plan.svg
+npm run plan:generate  # régénère public/plan/site-plan.svg (ancien plan de démo, plus utilisé en ligne)
+npx tsx --conditions=react-server scripts/import-plan.ts prisma/data/plan-kayar.json [--reset --price-per-m2=42000 …]
+                       # remplace les terrains par ceux d'un plan extrait (JSON + fond SVG voisin) ; simulation sans --apply
 npm run db:check       # teste la connexion à la base (DATABASE_URL et DIRECT_URL)
 npm run storage:check  # teste le stockage configuré (envoi, lecture, suppression)
 npm run storage:sync   # envoie vers le stockage les fichiers référencés en base qui y manquent
@@ -57,6 +59,7 @@ npm run storage:sync   # envoie vers le stockage les fichiers référencés en b
 - Connexion de l'espace client sans SMS : `OTP_TEST_CODE` (6 chiffres) est accepté à la place du code envoyé, uniquement tant que `SMS_PROVIDER=console`. Provisoire : à retirer avant l'ouverture aux vrais propriétaires.
 - Calculs financiers **uniquement** via `@/lib/finance` (`resolvePlan`, `buildSchedule`, `summarizeSale`) : les versements s'imputent dans l'ordre des échéances.
 - Statut `SOLD` d'un terrain : posé uniquement par la création d'une vente ; l'annulation d'une vente remet le terrain `AVAILABLE`.
+- **Conditions de vente du site** (Admin → Terrains, encadré en tête de liste ; action `setSiteTerms`) : prix du m² (`Settings.lotPricePerM2`, arrondi `lotPriceRounding` ; `null` = prix saisis terrain par terrain), caution par défaut (`defaultDepositRate`) et durée du solde (`defaultInstallments` × `defaultFrequency`). Un terrain sans prix particulier (`Lot.customPrice = false`) et non vendu suit le prix du site : tout recalcul passe par `applySitePricing` (`@/lib/lot-prices`, deux requêtes), calculs purs dans `@/lib/lot-pricing`. Un prix posé à la main (fiche « Prix particulier », action groupée, colonne Prix d'un import Excel) devient particulier quand un prix du m² existe ; l'action groupée « Prix du site » l'annule. Caution et durée s'appliquent d'elles-mêmes aux terrains sans modalités propres : ne pas les recopier sur les terrains.
 - Fichiers : `/api/admin/upload` (client : `uploadFile()`), clés `public/…` servies par `/api/files/…`, clés `private/…` uniquement via `/api/documents/[id]` (contrôle d'accès). Taille maximale : `UPLOAD_MAX_MB` (`@/lib/upload-limits`, 50 Mo = limite du bucket Supabase). Toute écriture de fichier passe par `putObject()` (`@/lib/storage`), y compris dans le seed.
 - Libellés et couleurs de statut : `@/lib/labels`. Formatage : `@/lib/format` (`formatMoney`, `formatDate`, `formatArea`…), téléphones : `@/lib/phone` (E.164).
 
