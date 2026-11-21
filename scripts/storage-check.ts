@@ -6,7 +6,7 @@ import { deleteObject, getObject, putObject } from "../src/lib/storage"
 async function main() {
   const driver = process.env.STORAGE_DRIVER ?? "local"
   const key = `public/tests/verification-${Date.now()}.txt`
-  const payload = Buffer.from("NADI Group — test de stockage : 0123456789")
+  const payload = Buffer.from("FUTURIA GROUP — test de stockage : 0123456789")
   console.log(`→ Pilote « ${driver} » : envoi de ${key}`)
   await putObject(key, payload, "text/plain")
 

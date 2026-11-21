@@ -1,5 +1,5 @@
 // Renomme la marque dans les DONNÉES : « NADI Group » → « FUTURIA GROUP », « NADI » isolé → « FUTURIA »
-// (paramètres du site : nom, textes, FAQ… et position / description des terrains, ex. « Avenue NADI »).
+// (paramètres du site : nom, textes, FAQ…, position / description des terrains, ex. « Avenue NADI », et nom des administrateurs).
 // Les adresses e-mail, les liens et les identifiants techniques (en minuscules) ne sont pas modifiés.
 // À lancer une seule fois, au moment de la mise en ligne de la nouvelle identité.
 // Usage : npx tsx scripts/rename-brand.ts           (simulation : affiche les changements, n'écrit rien)
@@ -56,7 +56,12 @@ async function main() {
   console.log(`Base : ${host} — ${apply ? "ÉCRITURE" : "simulation (ajoutez --apply pour écrire)"}\n`)
 
   try {
-    const settings = await db.settings.findUnique({ where: { id: 1 } })
+    // `select` limité aux champs utiles : le script reste utilisable quand le client Prisma connaît des colonnes
+    // qu'une base pas encore migrée n'a pas (une lecture ou une écriture complète échouerait).
+    const settings = await db.settings.findUnique({
+      where: { id: 1 },
+      select: Object.fromEntries([...TEXT_FIELDS, ...JSON_FIELDS].map((f) => [f, true])) as Record<(typeof TEXT_FIELDS)[number] | (typeof JSON_FIELDS)[number], true>,
+    })
     const data: Record<string, unknown> = {}
     if (settings) {
       for (const field of TEXT_FIELDS) {
@@ -86,12 +91,16 @@ async function main() {
       console.log(excerpts(`${sample.position ?? ""} | ${sample.description ?? ""}`).slice(0, 2).join("\n"))
     }
 
+    const admins = await db.adminUser.findMany({ select: { id: true, name: true } })
+    const renamedAdmins = admins.filter((a) => rename(a.name) !== a.name)
+    for (const a of renamedAdmins) console.log(`  Administrateur : « ${a.name} » → « ${rename(a.name)} »`)
+
     const settingsCount = Object.keys(data).length
-    if (!settingsCount && !changedLots.length) {
-      console.log("Rien à renommer : aucune mention de l'ancienne marque dans les paramètres ni dans les terrains.")
+    if (!settingsCount && !changedLots.length && !renamedAdmins.length) {
+      console.log("Rien à renommer : aucune mention de l'ancienne marque dans les paramètres, les terrains ni les administrateurs.")
       return
     }
-    console.log(`\n${settingsCount} champ(s) des paramètres et ${changedLots.length} terrain(s) concernés.`)
+    console.log(`\n${settingsCount} champ(s) des paramètres, ${changedLots.length} terrain(s) et ${renamedAdmins.length} administrateur(s) concernés.`)
     if (!apply) {
       console.log("Simulation terminée : rien n'a été écrit.")
       return
@@ -104,9 +113,10 @@ async function main() {
           "description" = regexp_replace(regexp_replace("description", 'NADI\\s+Group', 'FUTURIA GROUP', 'gi'), '\\mNADI\\M', 'FUTURIA', 'g'),
           "updatedAt" = now()
         WHERE "position" ~ '\\mNADI\\M' OR "description" ~ '\\mNADI\\M' OR "position" ~* 'NADI\\s+Group' OR "description" ~* 'NADI\\s+Group'`,
-      ...(settingsCount ? [db.settings.update({ where: { id: 1 }, data })] : []),
+      ...(settingsCount ? [db.settings.update({ where: { id: 1 }, data, select: { id: true } })] : []),
+      ...renamedAdmins.map((a) => db.adminUser.update({ where: { id: a.id }, data: { name: rename(a.name) }, select: { id: true } })),
     ])
-    console.log(`Écrit : ${settingsCount} champ(s) des paramètres, ${lotRows} terrain(s).`)
+    console.log(`Écrit : ${settingsCount} champ(s) des paramètres, ${lotRows} terrain(s), ${renamedAdmins.length} administrateur(s).`)
   } finally {
     await db.$disconnect()
   }

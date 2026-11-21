@@ -1,4 +1,4 @@
-// Schéma de données — NADI Group (gestion de lotissement)
+// Schéma de données — FUTURIA GROUP (gestion de lotissement)
 // Les montants sont stockés en unités entières de la devise (FCFA, sans centimes).
 
 generator client {
@@ -43,7 +43,7 @@ model Settings {
   id Int @id @default(1)
 
   // Entreprise
-  companyName     String  @default("NADI Group")
+  companyName     String  @default("FUTURIA GROUP")
   companyTagline  String  @default("Bâtir aujourd'hui les quartiers de demain")
   companyAbout    String  @default("")
   companyPhone    String  @default("")
@@ -54,7 +54,7 @@ model Settings {
   signatureKey    String? // cachet + signature des reçus : clé du stockage privé, servie par /api/signature
 
   // Site / lotissement
-  siteName        String @default("Cité NADI")
+  siteName        String @default("Domaine FUTURIA")
   siteLocation    String @default("")
   siteDescription String @default("")
   siteAreaM2      Float  @default(40000)

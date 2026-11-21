@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Settings" ALTER COLUMN "companyName" SET DEFAULT 'FUTURIA GROUP',
+ALTER COLUMN "siteName" SET DEFAULT 'Domaine FUTURIA';

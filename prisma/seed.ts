@@ -135,7 +135,7 @@ async function main() {
         "Nous nous engageons à offrir des terrains de qualité, un suivi rigoureux et une transparence totale tout au long du processus. FUTURIA GROUP accompagne les familles, les investisseurs et la diaspora à chaque étape : choix du terrain, paiement échelonné, suivi des travaux et remise des documents.",
       companyPhone: "+221773620772",
       companyWhatsapp: "+221773620772",
-      companyEmail: "contact@nadigroup.sn",
+      companyEmail: "contact@futuriagroup.com",
       companyAddress: "Dakar, Sénégal",
       businessHours: "Lun - Ven, 9h - 18h",
       socialFacebook: "https://www.facebook.com/",
